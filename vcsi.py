@@ -103,19 +103,25 @@ class MediaInfo():
 		self.size = self.human_readable_size(size_bytes)
 
 
-	def pretty_duration(self, seconds):
+	def pretty_duration(self, seconds, show_centis=False):
 		hours = math.floor(seconds / 3600)
 		remaining_seconds = seconds - 3600 * hours
 
 		minutes = math.floor(remaining_seconds / 60)
-		remaining_seconds = round(remaining_seconds - 60 * minutes)
+		remaining_seconds = remaining_seconds - 60 * minutes
 
 		duration = ""
 
 		if hours > 0:
 			duration +=  "%s:" % (hours,)
 
-		duration += "%s:%s" % (str(minutes).zfill(2), str(remaining_seconds).zfill(2))
+		duration += "%s:%s" % (str(minutes).zfill(2), str(round(remaining_seconds)).zfill(2))
+
+
+		if show_centis:
+			centis = round((remaining_seconds - math.floor(remaining_seconds)) * 100)
+			duration += ".%s" % (str(centis).zfill(2))
+
 		return duration
 
 	def desired_size(self, width=600):
@@ -200,13 +206,14 @@ def select_sharpest_images(
 	end_delay_seconds = math.floor(media_info.duration_seconds * end_delay_percent / 100)
 
 	delay = start_delay_seconds + end_delay_seconds
-	capture_interval = math.floor((media_info.duration_seconds - delay) / num_samples)
+	capture_interval = (media_info.duration_seconds - delay) / num_samples
 	end = int(media_info.duration_seconds - end_delay_seconds)
 
 	def timestamps():
-		for i in range(start_delay_seconds, end, capture_interval):
+		i = start_delay_seconds
+		while i <= end:
 			yield (i, media_info.pretty_duration(i))
-
+			i += capture_interval
 
 	for timestamp in timestamps():
 		print(timestamp)
@@ -263,11 +270,14 @@ def chunks(l, n):
     for i in range(0, len(l), n):
         yield l[i:i+n]
 
-def compose_contact_sheet(media_info, frames, output_path=None, width=600):
+def compose_contact_sheet(media_info,
+	frames,
+	output_path=None,
+	width=600,
+	show_timestamp=False):
 	num_frames = len(frames)
 
 	desired_size = media_info.desired_size(width=width)
-	loaded_frames = [Image.open(path) for path, x, y in frames]
 
 	vertical_spacing = 5
 	height = num_frames * (desired_size[1] + vertical_spacing) - vertical_spacing
@@ -275,11 +285,14 @@ def compose_contact_sheet(media_info, frames, output_path=None, width=600):
 
 	
 	header_margin = 10
-	font_size = 10
+	header_font_size = 10
 	dejavu_sans_path = "/usr/share/fonts/TTF/DejaVuSans.ttf"
-	font = ImageFont.truetype(dejavu_sans_path, font_size)
+	header_font = ImageFont.truetype(dejavu_sans_path, header_font_size)
+	timestamp_font_size = 9
+	timestamp_font = ImageFont.truetype(dejavu_sans_path, timestamp_font_size)
 
-	filename_width = font.getsize(media_info.filename)[0]
+
+	filename_width = header_font.getsize(media_info.filename)[0]
 
 	max_width = width - 2 * header_margin
 	width_excess = filename_width - max_width
@@ -302,18 +315,54 @@ def compose_contact_sheet(media_info, frames, output_path=None, width=600):
 	header_line_height = 12
 	
 	header_height = 2 * header_margin + len(header_lines) * header_line_height
-	image = Image.new("RGB", (width, height + header_height), background)
+	image = Image.new("RGBA", (width, height + header_height), background)
 	draw = ImageDraw.Draw(image)
 
 	h = header_margin
-	color = (0, 0, 0, 255)
+	header_color = (0, 0, 0, 255)
 	for line in header_lines:
-		draw.text((header_margin, h), line, font=font, fill=color)
+		draw.text((header_margin, h), line, font=header_font, fill=header_color)
 		h += header_line_height
 
 	h = header_height
-	for frame in loaded_frames:
+	for frame_path, blurriness, timestamp in frames:
+		frame = Image.open(frame_path)
 		image.paste(frame, (0, h))
+		
+		# show timestamp
+		if show_timestamp:
+			pretty_timestamp = media_info.pretty_duration(timestamp, show_centis=True)
+			text_size = timestamp_font.getsize(pretty_timestamp)
+
+			# draw rectangle
+			rectangle_hmargin = 3
+			rectangle_vmargin = 1
+			rectangle_color = (40, 40, 40, 255)
+			upper_left = (
+				width - text_size[0] - header_margin - rectangle_hmargin,
+				h + desired_size[1] - 2 * header_margin - rectangle_vmargin
+				)
+			bottom_right = (
+				upper_left[0] + text_size[0] + 2 * rectangle_hmargin,
+				upper_left[1] + text_size[1] + 2 * rectangle_vmargin
+				)
+			draw.rectangle(
+				[upper_left, bottom_right],
+				fill=rectangle_color
+				)
+
+			# draw timestamp
+			timestamp_color = (255, 255, 255, 255)
+			draw.text(
+				(
+					upper_left[0] + rectangle_hmargin,
+					upper_left[1] + rectangle_vmargin
+				),
+				pretty_timestamp,
+				font=timestamp_font,
+				fill=timestamp_color
+				)
+
 		h += desired_size[1] + vertical_spacing
 
 	if not output_path:
@@ -347,6 +396,10 @@ def main():
 		dest="vcs_width",
 		type=int,
 		default=600)
+	parser.add_argument("-t", "--show-timestamp",
+		action="store_true",
+		help="display timestamp for each frame",
+		dest="show_timestamp")
 	parser.add_argument("-v", "--verbose",
 		action="store_true",
 		help="display verbose messages",
@@ -370,7 +423,10 @@ def main():
 
 	# TODO add media info on top or bottom (optional), TOP for now
 
-	compose_contact_sheet(media_info, selected_frames, output_path, width=args.vcs_width)
+	compose_contact_sheet(media_info,
+		selected_frames, output_path,
+		width=args.vcs_width,
+		show_timestamp=args.show_timestamp)
 	cleanup(temp_frames)
 
 
