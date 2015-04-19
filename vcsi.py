@@ -103,7 +103,10 @@ class MediaInfo():
 		self.size = self.human_readable_size(size_bytes)
 
 
-	def pretty_duration(self, seconds, show_centis=False):
+	def pretty_duration(self,
+		seconds,
+		show_centis=False,
+		show_millis=False):
 		hours = math.floor(seconds / 3600)
 		remaining_seconds = seconds - 3600 * hours
 
@@ -115,11 +118,12 @@ class MediaInfo():
 		if hours > 0:
 			duration +=  "%s:" % (hours,)
 
-		duration += "%s:%s" % (str(minutes).zfill(2), str(round(remaining_seconds)).zfill(2))
+		duration += "%s:%s" % (str(minutes).zfill(2), str(math.floor(remaining_seconds)).zfill(2))
 
 
 		if show_centis:
-			centis = round((remaining_seconds - math.floor(remaining_seconds)) * 100)
+			coeff = 1000 if show_millis else 100
+			centis = round((remaining_seconds - math.floor(remaining_seconds)) * coeff)
 			duration += ".%s" % (str(centis).zfill(2))
 
 		return duration
@@ -212,7 +216,7 @@ def select_sharpest_images(
 	def timestamps():
 		i = start_delay_seconds
 		while i <= end:
-			yield (i, media_info.pretty_duration(i))
+			yield (i, media_info.pretty_duration(i, show_millis=True))
 			i += capture_interval
 
 	for timestamp in timestamps():
