@@ -11,6 +11,7 @@ import math
 import os
 import tempfile
 import textwrap
+import random
 
 from PIL import Image, ImageFilter, ImageDraw, ImageFont
 import numpy
@@ -20,7 +21,7 @@ import numpy
 class MediaInfo():
 	"""Collect information about a video file"""
 
-	def __init__(self, path, verbose=True):
+	def __init__(self, path, verbose=False):
 		self.probe_media(path)
 		self.find_video_stream()
 		self.compute_display_resolution()
@@ -83,6 +84,12 @@ class MediaInfo():
 			self.display_width = width
 			self.display_height = height
 
+		if self.display_width == 0:
+			self.display_width = self.sample_width
+
+		if self.display_height == 0:
+			self.display_height = self.sample_height
+
 
 	def compute_format(self):
 		format_dict = self.ffprobe_dict["format"]
@@ -135,6 +142,7 @@ class MediaCapture():
 		"-i", self.path,
 		"-vframes", "1",
 		"-s", "%sx%s" % (width, height),
+		"-y",
 		out_path
 		]
 
@@ -149,7 +157,10 @@ class MediaCapture():
 		b = abs(numpy.fft.rfft2(a))
 		max_freq = self.avg9x(b)
 
-		return 1/max_freq
+		if max_freq is not 0:
+			return 1/max_freq
+		else:
+			return 1
 
 
 	def avg9x(self, matrix):
@@ -176,15 +187,17 @@ class MediaCapture():
 def select_sharpest_images(
 	media_info,
 	media_capture,
-	num_samples=21,
-	num_groups=4,
+	num_samples=30,
+	num_groups=5,
 	num_selected=3,
-	start_delay_seconds=5,
-	end_delay_seconds=5,
-	width=None,
-	height=None
+	start_delay_percent=5,
+	end_delay_percent=5,
+	width=600
 	):
 	# compute list of timestamps (equally distributed)
+
+	start_delay_seconds = math.floor(media_info.duration_seconds * start_delay_percent / 100)
+	end_delay_seconds = math.floor(media_info.duration_seconds * end_delay_percent / 100)
 
 	delay = start_delay_seconds + end_delay_seconds
 	capture_interval = math.floor((media_info.duration_seconds - delay) / num_samples)
@@ -200,15 +213,12 @@ def select_sharpest_images(
 
 
 	# compute desired_size
-	if not width and not height:
-		# TODO make this a program argument
-		width = 600
-		desired_size = media_info.desired_size(width=width)
-		height = desired_size[1]
+	desired_size = media_info.desired_size(width=width)
+	height = desired_size[1]
 
 	blurs = []
 	for timestamp in timestamps():
-		filename = tempfile.mkstemp()[1] + ".png"
+		filename = tempfile.mkstemp(suffix=".png")[1]
 
 		media_capture.make_capture(
 			timestamp[1],
@@ -223,18 +233,24 @@ def select_sharpest_images(
 	time_sorted = sorted(blurs, key=lambda x: x[2])
 
 	# group into num_selected groups
-	group_size = math.ceil(len(time_sorted)/num_groups)
-	groups = chunks(time_sorted, group_size)
+	if num_groups > 1:
+		group_size = math.ceil(len(time_sorted)/num_groups)
+		groups = chunks(time_sorted, group_size)
 
-	# find top sharpest for each group
-	selected_items = [best(x) for x in groups]
+		# find top sharpest for each group
+		selected_items = [best(x) for x in groups]
+	else:
+		selected_items = time_sorted
 
-	selected_items = sorted(selected_items, key=lambda x: x[1])[:num_selected]
+	sg_difference = num_groups - num_selected
+	sg_difference = sg_difference if sg_difference >= 0 else 0
+	skip_maxima = min(2, sg_difference)
+	selected_items = sorted(selected_items, key=lambda x: x[1])[skip_maxima:skip_maxima + num_selected]
+	#selected_items = random.sample(selected_items, num_selected)
 
-	for filename, score, timestamp in selected_items:
-		print(filename, score, timestamp)
+	selected_items = sorted(selected_items, key=lambda x: x[2])
 
-	return selected_items
+	return selected_items, time_sorted
 
 
 def best(captures):
@@ -247,10 +263,8 @@ def chunks(l, n):
     for i in range(0, len(l), n):
         yield l[i:i+n]
 
-def compose_contact_sheet(media_info, frames, output_path=None):
+def compose_contact_sheet(media_info, frames, output_path=None, width=600):
 	num_frames = len(frames)
-	# TODO make this a program argument
-	width = 600
 
 	desired_size = media_info.desired_size(width=width)
 	loaded_frames = [Image.open(path) for path, x, y in frames]
@@ -260,21 +274,33 @@ def compose_contact_sheet(media_info, frames, output_path=None):
 
 
 	
+	header_margin = 10
+	font_size = 10
+	dejavu_sans_path = "/usr/share/fonts/TTF/DejaVuSans.ttf"
+	font = ImageFont.truetype(dejavu_sans_path, font_size)
+
+	filename_width = font.getsize(media_info.filename)[0]
+
+	max_width = width - 2 * header_margin
+	width_excess = filename_width - max_width
+	if width_excess > 0:
+		excess_ratio = filename_width / max_width
+		max_line_length = len(media_info.filename) / excess_ratio
+	else:
+		max_line_length = 1000
 	
 
-	max_line_length = 96
 	header_lines = []
 	header_lines += textwrap.wrap(media_info.filename, max_line_length)
 	header_lines += ["File size: %s" % media_info.size]
 	header_lines += ["Duration: %s" % media_info.duration]
 	header_lines += ["Dimensions: %sx%s" % (media_info.sample_width, media_info.sample_height)]
 
-	dejavu_sans_path = "/usr/share/fonts/TTF/DejaVuSans.ttf"
-	font = ImageFont.truetype(dejavu_sans_path, 10)
+	
 
 	background = (255, 255, 255)
 	header_line_height = 12
-	header_margin = 10
+	
 	header_height = 2 * header_margin + len(header_lines) * header_line_height
 	image = Image.new("RGB", (width, height + header_height), background)
 	draw = ImageDraw.Draw(image)
@@ -295,7 +321,12 @@ def compose_contact_sheet(media_info, frames, output_path=None):
 	image.save(output_path)
 
 
-
+def cleanup(frames):
+	for filename, blur, timestamp in frames:
+		try:
+			os.unlink(filename)
+		except:
+			pass
 
 
 
@@ -306,6 +337,16 @@ def main():
 	parser.add_argument("-o", "--output",
 		help="save to output file",
 		dest="output_path")
+	parser.add_argument("-n", "--num-frames",
+		help="capture n frames",
+		dest="num_frames",
+		type=int,
+		default=3)
+	parser.add_argument("-w", "--width",
+		help="width of the generated contact sheet",
+		dest="vcs_width",
+		type=int,
+		default=600)
 	parser.add_argument("-v", "--verbose",
 		action="store_true",
 		help="display verbose messages",
@@ -318,13 +359,19 @@ def main():
 	media_info = MediaInfo(path, verbose=True)
 	media_capture = MediaCapture(path)
 
-	frames = select_sharpest_images(media_info, media_capture)
+	selected_frames, temp_frames = select_sharpest_images(
+		media_info,
+		media_capture,
+		num_selected=args.num_frames,
+		width=args.vcs_width
+		)
 
 	# TODO compose contact sheet in mxn tile using frames
 
 	# TODO add media info on top or bottom (optional), TOP for now
 
-	compose_contact_sheet(media_info, frames, output_path)
+	compose_contact_sheet(media_info, selected_frames, output_path, width=args.vcs_width)
+	cleanup(temp_frames)
 
 
 	
