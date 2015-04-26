@@ -13,6 +13,7 @@ import tempfile
 import textwrap
 import random
 import sys
+from collections import namedtuple
 
 from PIL import Image, ImageFilter, ImageDraw, ImageFont
 import numpy
@@ -63,6 +64,7 @@ class MediaInfo():
 			try:
 				if stream["codec_type"] == "video":
 					self.video_stream = stream
+					break
 			except:
 				pass
 
@@ -160,6 +162,19 @@ class MediaCapture():
 		subprocess.call(ffmpeg_command, stderr=subprocess.DEVNULL, stdout=subprocess.DEVNULL)
 
 
+	def compute_avg_color(self, image_path):
+		i = Image.open(image_path)
+		i = i.convert('P')
+		p = i.getcolors()
+		top_colors = 0
+		p = sorted(p, key=lambda x: x[0], reverse=True)
+		p = p[top_colors]
+		# TODO really compute avg color instead of taking most frequent one
+		
+		return p[1]
+
+
+
 	def compute_blurriness(self, image_path):
 		i = Image.open(image_path)
 		i = i.convert('L') #convert to grayscale
@@ -196,7 +211,7 @@ class MediaCapture():
 
 def grid_desired_size(grid, media_info, width=600, horizontal_margin=5):
 	if grid:
-		desired_width = (width - (grid[0] - 1) * horizontal_margin) / grid[0]
+		desired_width = (width - (grid.x - 1) * horizontal_margin) / grid.x
 	else:
 		desired_width = width
 
@@ -208,14 +223,14 @@ def select_sharpest_images(
 	media_info,
 	media_capture,
 	num_samples=30,
-	num_groups=5,
+	num_groups=7,
 	num_selected=3,
 	start_delay_percent=7,
 	end_delay_percent=7,
 	width=600,
 	grid=None
 	):
-	
+	# make sure num_selected is not too large
 	if num_selected > num_groups:
 		num_groups = num_selected
 
@@ -224,7 +239,6 @@ def select_sharpest_images(
 
 
 	# compute list of timestamps (equally distributed)
-
 	start_delay_seconds = math.floor(media_info.duration_seconds * start_delay_percent / 100)
 	end_delay_seconds = math.floor(media_info.duration_seconds * end_delay_percent / 100)
 
@@ -238,21 +252,16 @@ def select_sharpest_images(
 			yield (i, media_info.pretty_duration(i, show_millis=True))
 			i += capture_interval
 
-
 	# compute desired_size
 	desired_size = grid_desired_size(grid, media_info, width=width)
-	
-	height = desired_size[1]
 
+	Frame = namedtuple('Frame', ['filename', 'blurriness', 'timestamp', 'avg_color'])
 	blurs = []
-
 	for i, timestamp in enumerate(timestamps()):
-		filename = tempfile.mkstemp(suffix=".png")[1]
-
 		status = "Sampling... %s/%s" % ((i+1), num_samples)
 		print(status, end="\r")
 
-
+		filename = tempfile.mkstemp(suffix=".png")[1]
 
 		media_capture.make_capture(
 			timestamp[1],
@@ -260,10 +269,16 @@ def select_sharpest_images(
 			desired_size[1],
 			filename)
 		blurriness = media_capture.compute_blurriness(filename)
+		avg_color = media_capture.compute_avg_color(filename)
 
-		blurs += [(filename, blurriness, timestamp[0])]
+		blurs += [
+		Frame(filename=filename,
+			blurriness=blurriness,
+			timestamp=timestamp[0],
+			avg_color=avg_color)
+		]
 
-	time_sorted = sorted(blurs, key=lambda x: x[2])
+	time_sorted = sorted(blurs, key=lambda x: x.timestamp)
 
 	# group into num_selected groups
 	if num_groups > 1:
@@ -275,18 +290,57 @@ def select_sharpest_images(
 	else:
 		selected_items = time_sorted
 
-	sg_difference = num_groups - num_selected
-	sg_difference = sg_difference if sg_difference >= 0 else 0
-	skip_maxima = min(2, sg_difference)
-	selected_items = sorted(selected_items, key=lambda x: x[1])[skip_maxima:skip_maxima + num_selected]
-	selected_items = sorted(selected_items, key=lambda x: x[2])
+	#selected_items = time_sorted
+
+	#selected_items = sorted(selected_items, key=lambda x: x.blurriness)[:num_selected]
+	#selected_items = random.sample(selected_items, num_selected)
+	#selected_items = random.sample(time_sorted, num_selected)
+	
+	# experimental
+	selected_items = select_color_variety(selected_items, num_selected)
 
 
 	return selected_items, time_sorted
 
 
+def select_color_variety(frames, num_selected):
+	avg_color_sorted = sorted(frames, key=lambda x: x.avg_color)
+	min_color = avg_color_sorted[0].avg_color
+	max_color = avg_color_sorted[-1].avg_color
+	color_span = max_color - min_color
+	min_color_distance = int(color_span * 0.5)
+
+	blurriness_sorted = sorted(frames, key=lambda x: x.blurriness, reverse=True)
+
+	selected_items = []
+	unselected_items = []
+	while blurriness_sorted:
+		frame = blurriness_sorted.pop()
+		
+		if not selected_items:
+			selected_items += [frame]
+		else:
+			color_distance = min([abs(frame.avg_color - x.avg_color) for x in selected_items])
+			if color_distance < min_color_distance:
+				# too close to existing selected frame
+				# don't select unless we run out of frames
+				unselected_items += [(frame, color_distance)]
+			else:
+				selected_items += [frame]
+
+	missing_items_count = num_selected - len(selected_items)
+	if missing_items_count > 0:
+		remaining_items = sorted(unselected_items, key=lambda x: x[0].blurriness)
+		selected_items += [x[0] for x in remaining_items[:missing_items_count]]
+
+	return selected_items
+
+
+
+
+
 def best(captures):
-	return sorted(captures, key=lambda x: x[1])[0]
+	return sorted(captures, key=lambda x: x.blurriness)[0]
 
 
 def chunks(l, n):
@@ -295,20 +349,21 @@ def chunks(l, n):
     for i in range(0, len(l), n):
         yield l[i:i+n]
 
+
 def compose_contact_sheet(media_info,
 	frames,
 	output_path=None,
 	width=600,
 	show_timestamp=False,
 	grid=None):
+	"""Creates a video contact sheet with the media information in a header
+	and the selected frames arranged on a mxn grid with optional timestamps"""
+
 	num_frames = len(frames)
-
 	desired_size = grid_desired_size(grid, media_info, width=width)
-
 	vertical_spacing = 5
 	horizontal_spacing = 5
-	height = grid[1] * (desired_size[1] + vertical_spacing) - vertical_spacing
-
+	height = grid.y * (desired_size[1] + vertical_spacing) - vertical_spacing
 
 	
 	header_margin = 10
@@ -320,9 +375,9 @@ def compose_contact_sheet(media_info,
 
 
 	filename_width = header_font.getsize(media_info.filename)[0]
-
 	max_width = width - 2 * header_margin
 	width_excess = filename_width - max_width
+	
 	if width_excess > 0:
 		excess_ratio = filename_width / max_width
 		max_line_length = len(media_info.filename) / excess_ratio
@@ -337,7 +392,6 @@ def compose_contact_sheet(media_info,
 	header_lines += ["Dimensions: %sx%s" % (media_info.sample_width, media_info.sample_height)]
 
 	
-
 	background = (255, 255, 255)
 	header_line_height = 12
 	
@@ -353,16 +407,17 @@ def compose_contact_sheet(media_info,
 
 	h = header_height
 	w = 0
-	for i, (frame_path, blurriness, timestamp) in enumerate(frames):
-		frame = Image.open(frame_path)
-		image.paste(frame, (w, h))
+	frames = sorted(frames, key=lambda x: x.timestamp)
+	for i, frame in enumerate(frames):
+		f = Image.open(frame.filename)
+		image.paste(f, (w, h))
 
 		# update x position early for timestamp
 		w += desired_size[0] + horizontal_spacing
 		
 		# show timestamp
 		if show_timestamp:
-			pretty_timestamp = media_info.pretty_duration(timestamp, show_centis=True)
+			pretty_timestamp = media_info.pretty_duration(frame.timestamp, show_centis=True)
 			text_size = timestamp_font.getsize(pretty_timestamp)
 
 			# draw rectangle
@@ -395,22 +450,23 @@ def compose_contact_sheet(media_info,
 				)
 
 		# update y position
-		if (i+1) % grid[0] == 0:
+		if (i+1) % grid.x == 0:
 			h += desired_size[1] + vertical_spacing
 
 		# update x position
-		if (i+1) % grid[0] == 0:
+		if (i+1) % grid.x == 0:
 			w = 0
 
 	if not output_path:
 		output_path = media_info.filename + ".png"
+
 	image.save(output_path)
 
 
 def cleanup(frames):
-	for filename, blur, timestamp in frames:
+	for frame in frames:
 		try:
-			os.unlink(filename)
+			os.unlink(frame.filename)
 		except:
 			pass
 
@@ -420,12 +476,10 @@ def mxn(string):
 		split = string.split("x")
 		m = int(split[0])
 		n = int(split[1])
-		return (m, n)
+		Grid = namedtuple('Grid', ['x', 'y'])
+		return Grid(m, n)
 	except:
 		raise argparse.ArgumentTypeError("Grid must be of the form mxn, where m is the number of columns and n is the number of rows.")
-
-
-
 
 
 def main():
@@ -453,7 +507,7 @@ def main():
 		help="number of samples",
 		dest="num_samples",
 		type=int,
-		default=30)
+		default=50)
 	parser.add_argument("-t", "--show-timestamp",
 		action="store_true",
 		help="display timestamp for each frame",
@@ -462,6 +516,7 @@ def main():
 		action="store_true",
 		help="display verbose messages",
 		dest="is_verbose")
+	
 	args = parser.parse_args()
 
 	path = args.filename
@@ -472,11 +527,10 @@ def main():
 
 	num_selected = args.num_frames
 
-
 	if args.mxn:
 		num_selected = args.mxn[0] * args.mxn[1]
 	else:
-		args.mxn = (1, num_selected)
+		args.mxn = mxn("%sx%s" % (1, num_selected))
 
 	selected_frames, temp_frames = select_sharpest_images(
 		media_info,
@@ -489,20 +543,17 @@ def main():
 
 	# TODO add media info on top or bottom (optional), TOP for now
 	print("Composing contact sheet...")
-	compose_contact_sheet(media_info,
-		selected_frames, output_path,
+	compose_contact_sheet(
+		media_info,
+		selected_frames,
+		output_path,
 		width=args.vcs_width,
 		show_timestamp=args.show_timestamp,
-		grid=args.mxn)
+		grid=args.mxn
+		)
 	
 	print("Cleaning up temporary files...")
 	cleanup(temp_frames)
-
-
-	
-
-
-
 
 
 if __name__ == "__main__":
