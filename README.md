@@ -19,6 +19,7 @@ $ vcsi bbb_sunflower_1080p_60fps_normal.mp4 -w 725 -n 4 -s 12
 ```
 ![Image](<http://i.imgur.com/FzOTXeK.jpg>)
 
+The above contact sheets were generated from a movie called "Big Buck Bunny".
 
 
 ## Requirements
@@ -35,12 +36,13 @@ Must be in PATH:
 * ffprobe
 
 ```
-pip install -r requirements.txt
-apt-get install ffmpeg
+$ pip install -r requirements.txt
+$ apt-get install ffmpeg
 ```
 
 ## Usage
 
+```
 $ vcsi -h
 usage: vcsi [-h] [-o OUTPUT_PATH] [-n NUM_FRAMES] [-w VCS_WIDTH] [-g MXN]
             [-s NUM_SAMPLES] [-t] [-v]
@@ -64,3 +66,4 @@ optional arguments:
                         number of samples
   -t, --show-timestamp  display timestamp for each frame
   -v, --verbose         display verbose messages
+```
