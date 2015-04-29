@@ -4,7 +4,22 @@ Create a video contact sheet
 
 ## Examples
 
-TODO
+```
+$ vcsi bbb_sunflower_1080p_60fps_normal.mp4 -t -n 3 -s 10 -w 400
+```
+![Image](<http://i.imgur.com/EEzpMHE.png>)
+
+```
+$ vcsi bbb_sunflower_1080p_60fps_normal.mp4 -t -w 725 -g 3x5 -o output.png
+```
+![Image](<http://i.imgur.com/hY6XTSN.png>)
+
+```
+$ vcsi bbb_sunflower_1080p_60fps_normal.mp4 -w 725 -n 4 -s 12
+```
+![Image](<http://i.imgur.com/FzOTXeK.jpg>)
+
+
 
 ## Requirements
 
