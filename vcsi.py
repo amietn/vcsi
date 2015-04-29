@@ -237,6 +237,11 @@ def select_sharpest_images(
     if num_selected > num_samples:
         num_samples = num_selected
 
+    # make sure num_samples if large enough
+    if num_samples < num_selected or num_samples < num_groups:
+        num_samples = num_selected
+        num_groups = num_selected
+
     # compute list of timestamps (equally distributed)
     start_delay_seconds = math.floor(media_info.duration_seconds * start_delay_percent / 100)
     end_delay_seconds = math.floor(media_info.duration_seconds * end_delay_percent / 100)
