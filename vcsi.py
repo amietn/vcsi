@@ -37,6 +37,7 @@ class MediaInfo():
             print(self.size)
 
     def probe_media(self, path):
+        """Probe video file using ffprobe"""
         ffprobe_command = [
             "ffprobe",
             "-v", "quiet",
@@ -50,6 +51,7 @@ class MediaInfo():
         self.ffprobe_dict = json.loads(output.decode("utf-8"))
 
     def human_readable_size(self, num, suffix='B'):
+        """Converts a number of bytes to a human readable format"""
         for unit in ['', 'Ki', 'Mi', 'Gi', 'Ti', 'Pi', 'Ei', 'Zi']:
             if abs(num) < 1024.0:
                 return "%3.1f %s%s" % (num, unit, suffix)
@@ -57,6 +59,7 @@ class MediaInfo():
         return "%.1f %s%s" % (num, 'Yi', suffix)
 
     def find_video_stream(self):
+        """Find the first stream which is a video stream"""
         for stream in self.ffprobe_dict["streams"]:
             try:
                 if stream["codec_type"] == "video":
@@ -66,13 +69,16 @@ class MediaInfo():
                 pass
 
     def compute_display_resolution(self):
+        """Computes the display resolution.
+        Some videos have a sample resolution that differs from the display resolution
+        (non-square pixels), thus the proper display resolution has to be computed."""
         width = int(self.video_stream["width"])
         height = int(self.video_stream["height"])
         self.sample_width = width
         self.sample_height = height
         sample_aspect_ratio = self.video_stream["sample_aspect_ratio"]
 
-        if sample_aspect_ratio is not "1:1":
+        if not sample_aspect_ratio == "1:1":
             sample_split = sample_aspect_ratio.split(":")
             sw = int(sample_split[0])
             sh = int(sample_split[1])
@@ -90,6 +96,7 @@ class MediaInfo():
             self.display_height = self.sample_height
 
     def compute_format(self):
+        """Compute duration, size and retrieve filename"""
         format_dict = self.ffprobe_dict["format"]
 
         self.duration_seconds = float(format_dict["duration"])
@@ -105,6 +112,7 @@ class MediaInfo():
             seconds,
             show_centis=False,
             show_millis=False):
+        """Converts seconds to a human readable time format"""
         hours = math.floor(seconds / 3600)
         remaining_seconds = seconds - 3600 * hours
 
@@ -126,6 +134,8 @@ class MediaInfo():
         return duration
 
     def desired_size(self, width=600):
+        """Computes the height based on a given width and fixed aspect ratio.
+        Returns (width, height)"""
         ratio = width / self.display_width
         desired_height = math.floor(self.display_height * ratio)
         return (int(width), int(desired_height))
@@ -138,6 +148,7 @@ class MediaCapture():
         self.path = path
 
     def make_capture(self, time, width, height, out_path="out.jpg"):
+        """Capture a frame at given time with given width and height using ffmpeg"""
         # TODO if capture fails, retry using slow seek mode (-ss after -i)
         ffmpeg_command = [
             "ffmpeg",
@@ -152,17 +163,19 @@ class MediaCapture():
         subprocess.call(ffmpeg_command, stderr=subprocess.DEVNULL, stdout=subprocess.DEVNULL)
 
     def compute_avg_color(self, image_path):
+        """Computes the average color of an image"""
+        # TODO really compute avg color instead of taking most frequent one
         i = Image.open(image_path)
         i = i.convert('P')
         p = i.getcolors()
         top_colors = 0
         p = sorted(p, key=lambda x: x[0], reverse=True)
         p = p[top_colors]
-        # TODO really compute avg color instead of taking most frequent one
 
         return p[1]
 
     def compute_blurriness(self, image_path):
+        """Computes the blurriness of an image. Small value means less blurry."""
         i = Image.open(image_path)
         i = i.convert('L')  # convert to grayscale
 
@@ -175,15 +188,18 @@ class MediaCapture():
         else:
             return 1
 
-    def avg9x(self, matrix):
+    def avg9x(self, matrix, percentage=0.05):
+        """Computes the median of the top n% highest values.
+        By default, takes the top 5%"""
         xs = matrix.flatten()
         srt = sorted(xs, reverse=True)
-        percentage = 0.05
         length = math.floor(percentage * len(srt))
 
-        return numpy.median(srt[:length])
+        matrix_subset = srt[:length]
+        return numpy.median(matrix_subset)
 
     def max_freq(self, matrix):
+        """Returns the maximum value in the matrix"""
         m = 0
         for row in matrix:
             mx = max(row)
@@ -194,6 +210,8 @@ class MediaCapture():
 
 
 def grid_desired_size(grid, media_info, width=600, horizontal_margin=5):
+    """Computes the size of the mxn grid with given fixed width.
+    Returns (width, height)"""
     if grid:
         desired_width = (width - (grid.x - 1) * horizontal_margin) / grid.x
     else:
@@ -274,11 +292,14 @@ def select_sharpest_images(
         selected_items = time_sorted
 
     selected_items = select_color_variety(selected_items, num_selected)
+    # TODO color variety vs uniform distribution based on time for captures
+    # TODO possible to get the best of both worlds?
 
     return selected_items, time_sorted
 
 
 def select_color_variety(frames, num_selected):
+    """Select captures so that they are not too similar to each other."""
     avg_color_sorted = sorted(frames, key=lambda x: x.avg_color)
     min_color = avg_color_sorted[0].avg_color
     max_color = avg_color_sorted[-1].avg_color
@@ -312,6 +333,7 @@ def select_color_variety(frames, num_selected):
 
 
 def best(captures):
+    """Returns the less blurry capture"""
     return sorted(captures, key=lambda x: x.blurriness)[0]
 
 
@@ -433,6 +455,7 @@ def compose_contact_sheet(
 
 
 def cleanup(frames):
+    """Delete temporary captures"""
     for frame in frames:
         try:
             os.unlink(frame.filename)
@@ -441,6 +464,8 @@ def cleanup(frames):
 
 
 def mxn(string):
+    """Type parser for argparse. Argument of type "mxn" will be converted to Grid(m, n).
+    An exception will be thrown if the argument is not of the required form"""
     try:
         split = string.split("x")
         m = int(split[0])
@@ -452,6 +477,7 @@ def mxn(string):
 
 
 def main():
+    """Program entry point"""
     parser = argparse.ArgumentParser(description="Create a video contact sheet")
     parser.add_argument("filename")
     parser.add_argument(
