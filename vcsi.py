@@ -20,6 +20,12 @@ import numpy
 __author__ = "Nils Amiet"
 
 
+DEFAULT_METADATA_FONT_SIZE = 10
+DEFAULT_METADATA_FONT = "/usr/share/fonts/TTF/DejaVuSans.ttf"
+DEFAULT_TIMESTAMP_FONT_SIZE = 9
+DEFAULT_TIMESTAMP_FONT = DEFAULT_METADATA_FONT
+
+
 class MediaInfo():
     """Collect information about a video file"""
 
@@ -355,7 +361,11 @@ def compose_contact_sheet(
         output_path=None,
         width=600,
         show_timestamp=False,
-        grid=None):
+        grid=None,
+        metadata_font=DEFAULT_METADATA_FONT,
+        metadata_font_size=DEFAULT_METADATA_FONT_SIZE,
+        timestamp_font=DEFAULT_TIMESTAMP_FONT,
+        timestamp_font_size=DEFAULT_TIMESTAMP_FONT_SIZE):
     """Creates a video contact sheet with the media information in a header
     and the selected frames arranged on a mxn grid with optional timestamps"""
 
@@ -366,13 +376,11 @@ def compose_contact_sheet(
     height = grid.y * (desired_size[1] + vertical_spacing) - vertical_spacing
 
     header_margin = 10
-    header_font_size = 10
-    dejavu_sans_path = "/usr/share/fonts/TTF/DejaVuSans.ttf"
-    header_font = ImageFont.truetype(dejavu_sans_path, header_font_size)
-    timestamp_font_size = 9
-    timestamp_font = ImageFont.truetype(dejavu_sans_path, timestamp_font_size)
+    header_font = ImageFont.truetype(metadata_font, metadata_font_size)
+    timestamp_font = ImageFont.truetype(timestamp_font, timestamp_font_size)
 
-    filename_width = header_font.getsize(media_info.filename)[0]
+    metadata_font_dimensions = header_font.getsize(media_info.filename)
+    filename_width = metadata_font_dimensions[0]
     max_width = width - 2 * header_margin
     width_excess = filename_width - max_width
 
@@ -389,7 +397,8 @@ def compose_contact_sheet(
     header_lines += ["Dimensions: %sx%s" % (media_info.sample_width, media_info.sample_height)]
 
     background = (255, 255, 255)
-    header_line_height = 12
+    line_spacing_coefficient = 1.2
+    header_line_height = int(metadata_font_dimensions[1] * line_spacing_coefficient)
 
     header_height = 2 * header_margin + len(header_lines) * header_line_height
     image = Image.new("RGBA", (width, height + header_height), background)
@@ -519,6 +528,17 @@ def main():
         help="display timestamp for each frame",
         dest="show_timestamp")
     parser.add_argument(
+        "--metadata-font-size",
+        help="size of the font used for metadata",
+        dest="metadata_font_size",
+        type=int,
+        default=DEFAULT_METADATA_FONT_SIZE)
+    parser.add_argument(
+        "--metadata-font",
+        help="TTF font used for metadata",
+        dest="metadata_font",
+        default=DEFAULT_METADATA_FONT)
+    parser.add_argument(
         "-v", "--verbose",
         action="store_true",
         help="display verbose messages",
@@ -555,7 +575,9 @@ def main():
         output_path,
         width=args.vcs_width,
         show_timestamp=args.show_timestamp,
-        grid=args.mxn
+        grid=args.mxn,
+        metadata_font=args.metadata_font,
+        metadata_font_size=args.metadata_font_size
         )
 
     print("Cleaning up temporary files...")
