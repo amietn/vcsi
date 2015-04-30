@@ -338,7 +338,7 @@ def select_color_variety(frames, num_selected):
 
 
 def best(captures):
-    """Returns the less blurry capture"""
+    """Returns the least blurry capture"""
     return sorted(captures, key=lambda x: x.blurriness)[0]
 
 
