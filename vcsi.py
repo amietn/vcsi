@@ -539,6 +539,17 @@ def main():
         dest="metadata_font",
         default=DEFAULT_METADATA_FONT)
     parser.add_argument(
+        "--timestamp-font-size",
+        help="size of the font used for timestamps",
+        dest="timestamp_font_size",
+        type=int,
+        default=DEFAULT_METADATA_FONT_SIZE)
+    parser.add_argument(
+        "--timestamp-font",
+        help="TTF font used for timestamps",
+        dest="timestamp_font",
+        default=DEFAULT_METADATA_FONT)
+    parser.add_argument(
         "-v", "--verbose",
         action="store_true",
         help="display verbose messages",
@@ -577,7 +588,9 @@ def main():
         show_timestamp=args.show_timestamp,
         grid=args.mxn,
         metadata_font=args.metadata_font,
-        metadata_font_size=args.metadata_font_size
+        metadata_font_size=args.metadata_font_size,
+        timestamp_font=args.timestamp_font,
+        timestamp_font_size=args.timestamp_font_size
         )
 
     print("Cleaning up temporary files...")
