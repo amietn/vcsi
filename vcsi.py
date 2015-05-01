@@ -516,19 +516,19 @@ def main():
         default=3)
     parser.add_argument(
         "--start-delay-percent",
-        help="do not capture frames in the first n% of total time",
+        help="do not capture frames in the first n percent of total time",
         dest="start_delay_percent",
         type=int,
         default=DEFAULT_START_DELAY_PERCENT)
     parser.add_argument(
         "--end-delay-percent",
-        help="do not capture frames in the last n% of total time",
+        help="do not capture frames in the last n percent of total time",
         dest="end_delay_percent",
         type=int,
         default=DEFAULT_END_DELAY_PERCENT)
     parser.add_argument(
         "--delay-percent",
-        help="do not capture frames in the first and last n% of total time",
+        help="do not capture frames in the first and last n percent of total time",
         dest="delay_percent",
         type=int,
         default=DEFAULT_DELAY_PERCENT)
