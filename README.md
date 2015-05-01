@@ -17,7 +17,7 @@ $ vcsi bbb_sunflower_1080p_60fps_normal.mp4 -t -w 725 -g 3x5 -o output.png
 ```
 $ vcsi bbb_sunflower_1080p_60fps_normal.mp4 -w 725 -n 4 -s 12
 ```
-![Image](<http://i.imgur.com/xJzj8K0.jpg>)
+![Image](<http://i.imgur.com/omUpSfq.jpg>)
 
 The above contact sheets were generated from a movie called "Big Buck Bunny".
 
