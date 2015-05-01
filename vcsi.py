@@ -20,10 +20,10 @@ import numpy
 __author__ = "Nils Amiet"
 
 
-DEFAULT_METADATA_FONT_SIZE = 10
-DEFAULT_METADATA_FONT = "/usr/share/fonts/TTF/DejaVuSans.ttf"
-DEFAULT_TIMESTAMP_FONT_SIZE = 9
-DEFAULT_TIMESTAMP_FONT = DEFAULT_METADATA_FONT
+DEFAULT_METADATA_FONT_SIZE = 12
+DEFAULT_METADATA_FONT = "/usr/share/fonts/TTF/LiberationSans-Regular.ttf"
+DEFAULT_TIMESTAMP_FONT_SIZE = 10
+DEFAULT_TIMESTAMP_FONT = "/usr/share/fonts/TTF/DejaVuSans.ttf"
 
 
 class MediaInfo():
@@ -543,12 +543,12 @@ def main():
         help="size of the font used for timestamps",
         dest="timestamp_font_size",
         type=int,
-        default=DEFAULT_METADATA_FONT_SIZE)
+        default=DEFAULT_TIMESTAMP_FONT_SIZE)
     parser.add_argument(
         "--timestamp-font",
         help="TTF font used for timestamps",
         dest="timestamp_font",
-        default=DEFAULT_METADATA_FONT)
+        default=DEFAULT_TIMESTAMP_FONT)
     parser.add_argument(
         "-v", "--verbose",
         action="store_true",
