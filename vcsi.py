@@ -24,6 +24,7 @@ DEFAULT_METADATA_FONT_SIZE = 12
 DEFAULT_METADATA_FONT = "/usr/share/fonts/TTF/LiberationSans-Regular.ttf"
 DEFAULT_TIMESTAMP_FONT_SIZE = 10
 DEFAULT_TIMESTAMP_FONT = "/usr/share/fonts/TTF/DejaVuSans.ttf"
+DEFAULT_CONTACT_SHEET_WIDTH = 600
 
 
 class MediaInfo():
@@ -139,7 +140,7 @@ class MediaInfo():
 
         return duration
 
-    def desired_size(self, width=600):
+    def desired_size(self, width=DEFAULT_CONTACT_SHEET_WIDTH):
         """Computes the height based on a given width and fixed aspect ratio.
         Returns (width, height)"""
         ratio = width / self.display_width
@@ -215,7 +216,7 @@ class MediaCapture():
         return m
 
 
-def grid_desired_size(grid, media_info, width=600, horizontal_margin=5):
+def grid_desired_size(grid, media_info, width=DEFAULT_CONTACT_SHEET_WIDTH, horizontal_margin=5):
     """Computes the size of the mxn grid with given fixed width.
     Returns (width, height)"""
     if grid:
@@ -234,7 +235,7 @@ def select_sharpest_images(
         num_selected=3,
         start_delay_percent=7,
         end_delay_percent=7,
-        width=600,
+        width=DEFAULT_CONTACT_SHEET_WIDTH,
         grid=None):
     # make sure num_selected is not too large
     if num_selected > num_groups:
@@ -359,7 +360,7 @@ def compose_contact_sheet(
         media_info,
         frames,
         output_path=None,
-        width=600,
+        width=DEFAULT_CONTACT_SHEET_WIDTH,
         show_timestamp=False,
         grid=None,
         metadata_font=DEFAULT_METADATA_FONT,
@@ -509,7 +510,7 @@ def main():
         help="width of the generated contact sheet",
         dest="vcs_width",
         type=int,
-        default=600)
+        default=DEFAULT_CONTACT_SHEET_WIDTH)
     parser.add_argument(
         "-g", "--grid",
         help="display frames on a mxn grid (for example 4x5)",
