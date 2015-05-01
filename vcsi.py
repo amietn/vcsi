@@ -25,6 +25,9 @@ DEFAULT_METADATA_FONT = "/usr/share/fonts/TTF/LiberationSans-Regular.ttf"
 DEFAULT_TIMESTAMP_FONT_SIZE = 10
 DEFAULT_TIMESTAMP_FONT = "/usr/share/fonts/TTF/DejaVuSans.ttf"
 DEFAULT_CONTACT_SHEET_WIDTH = 600
+DEFAULT_DELAY_PERCENT = None
+DEFAULT_START_DELAY_PERCENT = 7
+DEFAULT_END_DELAY_PERCENT = DEFAULT_START_DELAY_PERCENT
 
 
 class MediaInfo():
@@ -506,6 +509,24 @@ def main():
         type=int,
         default=3)
     parser.add_argument(
+        "--start-delay-percent",
+        help="do not capture frames in the first n% of total time",
+        dest="start_delay_percent",
+        type=int,
+        default=DEFAULT_START_DELAY_PERCENT)
+    parser.add_argument(
+        "--end-delay-percent",
+        help="do not capture frames in the last n% of total time",
+        dest="end_delay_percent",
+        type=int,
+        default=DEFAULT_END_DELAY_PERCENT)
+    parser.add_argument(
+        "--delay-percent",
+        help="do not capture frames in the first and last n% of total time",
+        dest="delay_percent",
+        type=int,
+        default=DEFAULT_DELAY_PERCENT)
+    parser.add_argument(
         "-w", "--width",
         help="width of the generated contact sheet",
         dest="vcs_width",
@@ -571,13 +592,19 @@ def main():
     else:
         args.mxn = mxn("%sx%s" % (1, num_selected))
 
+    if args.delay_percent:
+        args.start_delay_percent = args.delay_percent
+        args.end_delay_percent = args.delay_percent
+
     selected_frames, temp_frames = select_sharpest_images(
         media_info,
         media_capture,
         num_selected=num_selected,
         num_samples=args.num_samples,
         width=args.vcs_width,
-        grid=args.mxn
+        grid=args.mxn,
+        start_delay_percent=args.start_delay_percent,
+        end_delay_percent=args.end_delay_percent
         )
 
     print("Composing contact sheet...")
