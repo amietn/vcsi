@@ -15,7 +15,8 @@ $ vcsi bbb_sunflower_1080p_60fps_normal.mp4 -t -w 725 -g 3x5 -o output.png
 ![Image](<http://i.imgur.com/CeG0fY2.png>)
 
 ```
-$ vcsi bbb_sunflower_1080p_60fps_normal.mp4 -w 725 -n 4 -s 12
+$ vcsi bbb_sunflower_1080p_60fps_normal.mp4 -w 725 -n 4 -s 12 --end-delay-percent 20
+
 ```
 ![Image](<http://i.imgur.com/omUpSfq.jpg>)
 
