@@ -28,6 +28,9 @@ DEFAULT_CONTACT_SHEET_WIDTH = 600
 DEFAULT_DELAY_PERCENT = None
 DEFAULT_START_DELAY_PERCENT = 7
 DEFAULT_END_DELAY_PERCENT = DEFAULT_START_DELAY_PERCENT
+DEFAULT_GRID_SPACING = None
+DEFAULT_GRID_HORIZONTAL_SPACING = 5
+DEFAULT_GRID_VERTICAL_SPACING = DEFAULT_GRID_HORIZONTAL_SPACING
 
 
 class MediaInfo():
@@ -219,7 +222,7 @@ class MediaCapture():
         return m
 
 
-def grid_desired_size(grid, media_info, width=DEFAULT_CONTACT_SHEET_WIDTH, horizontal_margin=5):
+def grid_desired_size(grid, media_info, width=DEFAULT_CONTACT_SHEET_WIDTH, horizontal_margin=DEFAULT_GRID_HORIZONTAL_SPACING):
     """Computes the size of the mxn grid with given fixed width.
     Returns (width, height)"""
     if grid:
@@ -239,7 +242,8 @@ def select_sharpest_images(
         start_delay_percent=7,
         end_delay_percent=7,
         width=DEFAULT_CONTACT_SHEET_WIDTH,
-        grid=None):
+        grid=None,
+        grid_horizontal_spacing=DEFAULT_GRID_HORIZONTAL_SPACING):
     # make sure num_selected is not too large
     if num_selected > num_groups:
         num_groups = num_selected
@@ -267,7 +271,7 @@ def select_sharpest_images(
             i += capture_interval
 
     # compute desired_size
-    desired_size = grid_desired_size(grid, media_info, width=width)
+    desired_size = grid_desired_size(grid, media_info, width=width, horizontal_margin=grid_horizontal_spacing)
 
     Frame = namedtuple('Frame', ['filename', 'blurriness', 'timestamp', 'avg_color'])
     blurs = []
@@ -369,17 +373,19 @@ def compose_contact_sheet(
         metadata_font=DEFAULT_METADATA_FONT,
         metadata_font_size=DEFAULT_METADATA_FONT_SIZE,
         timestamp_font=DEFAULT_TIMESTAMP_FONT,
-        timestamp_font_size=DEFAULT_TIMESTAMP_FONT_SIZE):
+        timestamp_font_size=DEFAULT_TIMESTAMP_FONT_SIZE,
+        grid_horizontal_spacing=DEFAULT_GRID_HORIZONTAL_SPACING,
+        grid_vertical_spacing=DEFAULT_GRID_VERTICAL_SPACING):
     """Creates a video contact sheet with the media information in a header
     and the selected frames arranged on a mxn grid with optional timestamps"""
 
     num_frames = len(frames)
-    desired_size = grid_desired_size(grid, media_info, width=width)
-    vertical_spacing = 5
-    horizontal_spacing = 5
-    height = grid.y * (desired_size[1] + vertical_spacing) - vertical_spacing
+    desired_size = grid_desired_size(grid, media_info, width=width, horizontal_margin=grid_horizontal_spacing)
+    height = grid.y * (desired_size[1] + grid_vertical_spacing) - grid_vertical_spacing
 
     header_margin = 10
+    timestamp_horizontal_spacing = 5
+    timestamp_vertical_spacing = timestamp_horizontal_spacing
     header_font = ImageFont.truetype(metadata_font, metadata_font_size)
     timestamp_font = ImageFont.truetype(timestamp_font, timestamp_font_size)
 
@@ -422,7 +428,7 @@ def compose_contact_sheet(
         image.paste(f, (w, h))
 
         # update x position early for timestamp
-        w += desired_size[0] + horizontal_spacing
+        w += desired_size[0] + grid_horizontal_spacing
 
         # show timestamp
         if show_timestamp:
@@ -434,8 +440,8 @@ def compose_contact_sheet(
             rectangle_vmargin = 1
             rectangle_color = (40, 40, 40, 255)
             upper_left = (
-                w - text_size[0] - 2 * rectangle_hmargin - 2 * horizontal_spacing,
-                h + desired_size[1] - text_size[1] - 2 * rectangle_vmargin - vertical_spacing
+                w - text_size[0] - 2 * rectangle_hmargin - grid_horizontal_spacing - timestamp_horizontal_spacing,
+                h + desired_size[1] - text_size[1] - 2 * rectangle_vmargin - timestamp_vertical_spacing
                 )
             bottom_right = (
                 upper_left[0] + text_size[0] + 2 * rectangle_hmargin,
@@ -460,7 +466,7 @@ def compose_contact_sheet(
 
         # update y position
         if (i+1) % grid.x == 0:
-            h += desired_size[1] + vertical_spacing
+            h += desired_size[1] + grid_vertical_spacing
 
         # update x position
         if (i+1) % grid.x == 0:
@@ -527,6 +533,24 @@ def main():
         type=int,
         default=DEFAULT_DELAY_PERCENT)
     parser.add_argument(
+        "--grid-spacing",
+        help="number of pixels spacing captures both vertically and horizontally",
+        dest="grid_spacing",
+        type=int,
+        default=DEFAULT_GRID_SPACING)
+    parser.add_argument(
+        "--grid-horizontal-spacing",
+        help="number of pixels spacing captures horizontally",
+        dest="grid_horizontal_spacing",
+        type=int,
+        default=DEFAULT_GRID_HORIZONTAL_SPACING)
+    parser.add_argument(
+        "--grid-vertical-spacing",
+        help="number of pixels spacing captures vertically",
+        dest="grid_vertical_spacing",
+        type=int,
+        default=DEFAULT_GRID_VERTICAL_SPACING)
+    parser.add_argument(
         "-w", "--width",
         help="width of the generated contact sheet",
         dest="vcs_width",
@@ -592,9 +616,13 @@ def main():
     else:
         args.mxn = mxn("%sx%s" % (1, num_selected))
 
-    if args.delay_percent:
+    if args.delay_percent is not None:
         args.start_delay_percent = args.delay_percent
         args.end_delay_percent = args.delay_percent
+
+    if args.grid_spacing is not None:
+        args.grid_horizontal_spacing = args.grid_spacing
+        args.grid_vertical_spacing = args.grid_spacing
 
     selected_frames, temp_frames = select_sharpest_images(
         media_info,
@@ -604,7 +632,8 @@ def main():
         width=args.vcs_width,
         grid=args.mxn,
         start_delay_percent=args.start_delay_percent,
-        end_delay_percent=args.end_delay_percent
+        end_delay_percent=args.end_delay_percent,
+        grid_horizontal_spacing=args.grid_horizontal_spacing
         )
 
     print("Composing contact sheet...")
@@ -618,7 +647,9 @@ def main():
         metadata_font=args.metadata_font,
         metadata_font_size=args.metadata_font_size,
         timestamp_font=args.timestamp_font,
-        timestamp_font_size=args.timestamp_font_size
+        timestamp_font_size=args.timestamp_font_size,
+        grid_horizontal_spacing=args.grid_horizontal_spacing,
+        grid_vertical_spacing=args.grid_vertical_spacing
         )
 
     print("Cleaning up temporary files...")
