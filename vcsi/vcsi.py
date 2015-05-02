@@ -31,6 +31,7 @@ DEFAULT_END_DELAY_PERCENT = DEFAULT_START_DELAY_PERCENT
 DEFAULT_GRID_SPACING = None
 DEFAULT_GRID_HORIZONTAL_SPACING = 5
 DEFAULT_GRID_VERTICAL_SPACING = DEFAULT_GRID_HORIZONTAL_SPACING
+DEFAULT_METADATA_POSITION = "top"
 
 
 class MediaInfo():
@@ -363,6 +364,26 @@ def chunks(l, n):
         yield l[i:i+n]
 
 
+def draw_metadata(
+        draw,
+        header_margin=None,
+        header_line_height=None,
+        header_lines=None,
+        header_font=None,
+        header_font_color=None,
+        start_height=None):
+    h = start_height
+    h += header_margin
+
+    for line in header_lines:
+        draw.text((header_margin, h), line, font=header_font, fill=header_font_color)
+        h += header_line_height
+
+    h += header_margin
+
+    return h
+
+
 def compose_contact_sheet(
         media_info,
         frames,
@@ -375,12 +396,16 @@ def compose_contact_sheet(
         timestamp_font=DEFAULT_TIMESTAMP_FONT,
         timestamp_font_size=DEFAULT_TIMESTAMP_FONT_SIZE,
         grid_horizontal_spacing=DEFAULT_GRID_HORIZONTAL_SPACING,
-        grid_vertical_spacing=DEFAULT_GRID_VERTICAL_SPACING):
+        grid_vertical_spacing=DEFAULT_GRID_VERTICAL_SPACING,
+        metadata_position=DEFAULT_METADATA_POSITION):
     """Creates a video contact sheet with the media information in a header
     and the selected frames arranged on a mxn grid with optional timestamps"""
-
     num_frames = len(frames)
-    desired_size = grid_desired_size(grid, media_info, width=width, horizontal_margin=grid_horizontal_spacing)
+    desired_size = grid_desired_size(
+        grid,
+        media_info,
+        width=width,
+        horizontal_margin=grid_horizontal_spacing)
     height = grid.y * (desired_size[1] + grid_vertical_spacing) - grid_vertical_spacing
 
     header_margin = 10
@@ -406,21 +431,35 @@ def compose_contact_sheet(
     header_lines += ["Duration: %s" % media_info.duration]
     header_lines += ["Dimensions: %sx%s" % (media_info.sample_width, media_info.sample_height)]
 
-    background = (255, 255, 255)
     line_spacing_coefficient = 1.2
     header_line_height = int(metadata_font_dimensions[1] * line_spacing_coefficient)
 
     header_height = 2 * header_margin + len(header_lines) * header_line_height
+
+    if metadata_position == "hidden":
+        header_height = 0
+
+    background = (255, 255, 255)
     image = Image.new("RGBA", (width, height + header_height), background)
     draw = ImageDraw.Draw(image)
+    h = 0
 
-    h = header_margin
-    header_color = (0, 0, 0, 255)
-    for line in header_lines:
-        draw.text((header_margin, h), line, font=header_font, fill=header_color)
-        h += header_line_height
+    def draw_metadata_helper():
+        header_font_color = (0, 0, 0, 255)
+        return draw_metadata(
+            draw,
+            header_margin=header_margin,
+            header_line_height=header_line_height,
+            header_lines=header_lines,
+            header_font=header_font,
+            header_font_color=header_font_color,
+            start_height=h)
 
-    h = header_height
+    # draw metadata
+    if metadata_position == "top":
+        h = draw_metadata_helper()
+
+    # draw capture grid
     w = 0
     frames = sorted(frames, key=lambda x: x.timestamp)
     for i, frame in enumerate(frames):
@@ -472,6 +511,12 @@ def compose_contact_sheet(
         if (i+1) % grid.x == 0:
             w = 0
 
+    # draw metadata
+    if metadata_position == "bottom":
+        h -= grid_vertical_spacing
+        h = draw_metadata_helper()
+
+    # save image
     if not output_path:
         output_path = media_info.filename + ".png"
 
@@ -498,6 +543,19 @@ def mxn(string):
         return Grid(m, n)
     except:
         raise argparse.ArgumentTypeError("Grid must be of the form mxn, where m is the number of columns and n is the number of rows.")
+
+
+def metadata_position(string):
+    """Type parser for argparse. Argument of type string must be one of ["top", "bottom", "hidden"].
+    An exception will be thrown if the argument is not one of these."""
+    valid_metadata_positions = ["top", "bottom", "hidden"]
+
+    lowercase_position = string.lower()
+    if lowercase_position in valid_metadata_positions:
+        return lowercase_position
+    else:
+        error = 'Metadata header position must be one of ["top", "bottom", "hidden"]'
+        raise argparse.ArgumentTypeError(error)
 
 
 def main():
@@ -596,6 +654,12 @@ def main():
         dest="timestamp_font",
         default=DEFAULT_TIMESTAMP_FONT)
     parser.add_argument(
+        "--metadata-position",
+        help="Position of the metadata header. Must be one of ['top', 'bottom', 'hidden']",
+        dest="metadata_position",
+        type=metadata_position,
+        default=DEFAULT_METADATA_POSITION)
+    parser.add_argument(
         "-v", "--verbose",
         action="store_true",
         help="display verbose messages",
@@ -649,7 +713,8 @@ def main():
         timestamp_font=args.timestamp_font,
         timestamp_font_size=args.timestamp_font_size,
         grid_horizontal_spacing=args.grid_horizontal_spacing,
-        grid_vertical_spacing=args.grid_vertical_spacing
+        grid_vertical_spacing=args.grid_vertical_spacing,
+        metadata_position=args.metadata_position
         )
 
     print("Cleaning up temporary files...")
