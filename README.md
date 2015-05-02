@@ -41,6 +41,14 @@ $ pip install -r requirements.txt
 $ apt-get install ffmpeg
 ```
 
+## Note for Windows users
+
+Grab a binary build of ffmpeg from Zeranoe here (e.g. 64bit static): http://ffmpeg.zeranoe.com/builds/
+
+Extract the archive and add the "bin" folder to your PATH so that "ffmpeg" and "ffprobe" can be invoked from the command line.
+
+If you have issues installing numpy with pip, grab an already built version of numpy here: http://sourceforge.net/projects/numpy/files/NumPy/
+
 ## Usage
 
 ```
