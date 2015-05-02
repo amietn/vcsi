@@ -10,15 +10,10 @@ $ vcsi bbb_sunflower_1080p_60fps_normal.mp4 -t -n 3 -s 10 -w 400
 ![Image](<http://i.imgur.com/HI6gg8f.png>)
 
 ```
-$ vcsi bbb_sunflower_1080p_60fps_normal.mp4 -t -w 725 -g 3x5 -o output.png
+$ vcsi bbb_sunflower_1080p_60fps_normal.mp4 -t -w 725 -g 3x5 -o output.png --end-delay-percent 20
 ```
-![Image](<http://i.imgur.com/CeG0fY2.png>)
+![Image](<http://i.imgur.com/nnDPpiJ.jpg>)
 
-```
-$ vcsi bbb_sunflower_1080p_60fps_normal.mp4 -w 725 -n 4 -s 12 --end-delay-percent 20
-
-```
-![Image](<http://i.imgur.com/omUpSfq.jpg>)
 
 The above contact sheets were generated from a movie called "Big Buck Bunny".
 
@@ -44,7 +39,7 @@ Running Windows? See the note below.
 
 Download a binary build of ffmpeg from Zeranoe here (e.g. 64bit static): http://ffmpeg.zeranoe.com/builds/
 
-Extract the archive and add the "bin" folder to your PATH so that "ffmpeg" and "ffprobe" can be invoked from the command line.
+Extract the archive and add the `bin` directory to your PATH so that `ffmpeg` and `ffprobe` can be invoked from the command line.
 
 If you have issues installing numpy with pip, download an already built version of numpy here: http://sourceforge.net/projects/numpy/files/NumPy/
 
