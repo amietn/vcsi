@@ -15,10 +15,10 @@ replaces=()
 backup=()
 options=(!emptydirs)
 install=
-source=("git+https://github.com/amietn/vcsi.git#tag=v$pkgver")
+source=("${pkgname}::git+https://github.com/amietn/vcsi.git#tag=v${pkgver}")
 md5sums=('SKIP')
 
 package() {
-  cd "$pkgname"
+  cd "${pkgname}"
   python setup.py install --root="$pkgdir/" --optimize=1
 }

@@ -24,6 +24,7 @@ vcsi is currently available for the following systems:
 | Linux packages | |
 | -------------- | --- |
 | Arch (AUR) | https://aur.archlinux.org/packages/vcsi/ |
+| Arch (AUR, git master) | https://aur.archlinux.org/packages/vcsi-git/ |
 
 Your system is not listed?
 
