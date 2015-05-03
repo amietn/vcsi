@@ -178,15 +178,21 @@ class MediaCapture():
 
     def compute_avg_color(self, image_path):
         """Computes the average color of an image"""
-        # TODO really compute avg color instead of taking most frequent one
         i = Image.open(image_path)
         i = i.convert('P')
         p = i.getcolors()
-        top_colors = 0
-        p = sorted(p, key=lambda x: x[0], reverse=True)
-        p = p[top_colors]
 
-        return p[1]
+        # compute avg color
+        total_count = 0
+        avg_color = 0
+        for count, color in p:
+            total_count += count
+            avg_color += count * color
+
+        avg_color /= total_count
+
+
+        return avg_color
 
     def compute_blurriness(self, image_path):
         """Computes the blurriness of an image. Small value means less blurry."""
@@ -238,13 +244,16 @@ def select_sharpest_images(
         media_info,
         media_capture,
         num_samples=30,
-        num_groups=7,
+        num_groups=5,
         num_selected=3,
         start_delay_percent=7,
         end_delay_percent=7,
         width=DEFAULT_CONTACT_SHEET_WIDTH,
         grid=None,
         grid_horizontal_spacing=DEFAULT_GRID_HORIZONTAL_SPACING):
+    if num_groups is None:
+        num_groups = num_selected
+
     # make sure num_selected is not too large
     if num_selected > num_groups:
         num_groups = num_selected
@@ -324,7 +333,7 @@ def select_color_variety(frames, num_selected):
     min_color = avg_color_sorted[0].avg_color
     max_color = avg_color_sorted[-1].avg_color
     color_span = max_color - min_color
-    min_color_distance = int(color_span * 0.5)
+    min_color_distance = int(color_span * 0.05)
 
     blurriness_sorted = sorted(frames, key=lambda x: x.blurriness, reverse=True)
 
