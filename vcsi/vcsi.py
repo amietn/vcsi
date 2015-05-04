@@ -34,6 +34,8 @@ DEFAULT_GRID_VERTICAL_SPACING = DEFAULT_GRID_HORIZONTAL_SPACING
 DEFAULT_METADATA_POSITION = "top"
 DEFAULT_METADATA_FONT_COLOR = "000000"
 DEFAULT_BACKGROUND_COLOR = "FFFFFF"
+DEFAULT_TIMESTAMP_FONT_COLOR = "FFFFFF"
+DEFAULT_TIMESTAMP_BACKGROUND_COLOR = "282828"
 
 
 class MediaInfo():
@@ -410,7 +412,9 @@ def compose_contact_sheet(
         grid_vertical_spacing=DEFAULT_GRID_VERTICAL_SPACING,
         metadata_position=DEFAULT_METADATA_POSITION,
         background_color=DEFAULT_BACKGROUND_COLOR,
-        metadata_font_color=DEFAULT_METADATA_FONT_COLOR):
+        metadata_font_color=DEFAULT_METADATA_FONT_COLOR,
+        timestamp_font_color=DEFAULT_TIMESTAMP_FONT_COLOR,
+        timestamp_background_color=DEFAULT_TIMESTAMP_BACKGROUND_COLOR):
     """Creates a video contact sheet with the media information in a header
     and the selected frames arranged on a mxn grid with optional timestamps"""
     num_frames = len(frames)
@@ -488,7 +492,6 @@ def compose_contact_sheet(
             # draw rectangle
             rectangle_hmargin = 3
             rectangle_vmargin = 1
-            rectangle_color = (40, 40, 40, 255)
             upper_left = (
                 w - text_size[0] - 2 * rectangle_hmargin - grid_horizontal_spacing - timestamp_horizontal_spacing,
                 h + desired_size[1] - text_size[1] - 2 * rectangle_vmargin - timestamp_vertical_spacing
@@ -499,11 +502,10 @@ def compose_contact_sheet(
                 )
             draw.rectangle(
                 [upper_left, bottom_right],
-                fill=rectangle_color
+                fill=timestamp_background_color
                 )
 
             # draw timestamp
-            timestamp_color = (255, 255, 255, 255)
             draw.text(
                 (
                     upper_left[0] + rectangle_hmargin,
@@ -511,7 +513,7 @@ def compose_contact_sheet(
                 ),
                 pretty_timestamp,
                 font=timestamp_font,
-                fill=timestamp_color
+                fill=timestamp_font_color
                 )
 
         # update y position
@@ -696,6 +698,18 @@ def main():
         type=hex_color,
         default=hex_color(DEFAULT_METADATA_FONT_COLOR))
     parser.add_argument(
+        "--timestamp-font-color",
+        help="Color of the timestamp font in hexadecimal, for example AABBCC",
+        dest="timestamp_font_color",
+        type=hex_color,
+        default=hex_color(DEFAULT_TIMESTAMP_FONT_COLOR))
+    parser.add_argument(
+        "--timestamp-background-color",
+        help="Color of the timestamp background rectangle in hexadecimal, for example AABBCC",
+        dest="timestamp_background_color",
+        type=hex_color,
+        default=hex_color(DEFAULT_TIMESTAMP_BACKGROUND_COLOR))
+    parser.add_argument(
         "-v", "--verbose",
         action="store_true",
         help="display verbose messages",
@@ -752,7 +766,9 @@ def main():
         grid_vertical_spacing=args.grid_vertical_spacing,
         metadata_position=args.metadata_position,
         background_color=args.background_color,
-        metadata_font_color=args.metadata_font_color
+        metadata_font_color=args.metadata_font_color,
+        timestamp_font_color=args.timestamp_font_color,
+        timestamp_background_color=args.timestamp_background_color
         )
 
     print("Cleaning up temporary files...")
