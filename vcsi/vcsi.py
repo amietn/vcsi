@@ -32,6 +32,8 @@ DEFAULT_GRID_SPACING = None
 DEFAULT_GRID_HORIZONTAL_SPACING = 5
 DEFAULT_GRID_VERTICAL_SPACING = DEFAULT_GRID_HORIZONTAL_SPACING
 DEFAULT_METADATA_POSITION = "top"
+DEFAULT_METADATA_FONT_COLOR = "000000"
+DEFAULT_BACKGROUND_COLOR = "FFFFFF"
 
 
 class MediaInfo():
@@ -406,7 +408,9 @@ def compose_contact_sheet(
         timestamp_font_size=DEFAULT_TIMESTAMP_FONT_SIZE,
         grid_horizontal_spacing=DEFAULT_GRID_HORIZONTAL_SPACING,
         grid_vertical_spacing=DEFAULT_GRID_VERTICAL_SPACING,
-        metadata_position=DEFAULT_METADATA_POSITION):
+        metadata_position=DEFAULT_METADATA_POSITION,
+        background_color=DEFAULT_BACKGROUND_COLOR,
+        metadata_font_color=DEFAULT_METADATA_FONT_COLOR):
     """Creates a video contact sheet with the media information in a header
     and the selected frames arranged on a mxn grid with optional timestamps"""
     num_frames = len(frames)
@@ -448,20 +452,18 @@ def compose_contact_sheet(
     if metadata_position == "hidden":
         header_height = 0
 
-    background = (255, 255, 255)
-    image = Image.new("RGBA", (width, height + header_height), background)
+    image = Image.new("RGBA", (width, height + header_height), background_color)
     draw = ImageDraw.Draw(image)
     h = 0
 
     def draw_metadata_helper():
-        header_font_color = (0, 0, 0, 255)
         return draw_metadata(
             draw,
             header_margin=header_margin,
             header_line_height=header_line_height,
             header_lines=header_lines,
             header_font=header_font,
-            header_font_color=header_font_color,
+            header_font_color=metadata_font_color,
             start_height=h)
 
     # draw metadata
@@ -567,6 +569,19 @@ def metadata_position(string):
         raise argparse.ArgumentTypeError(error)
 
 
+def hex_color(string):
+    """Type parser for argparse. Argument must be an hexadecimal number representing a color.
+    For example C0F32F. An exception will be raised if the argument is not of that form."""
+    try:
+        Color = namedtuple('Color', ['r', 'g', 'b'])
+        components = tuple(bytes.fromhex(string))
+        c = Color(*components)
+        return c
+    except:
+        error = "Color must be an hexadecimal number, for example AABBCC"
+        raise argparse.ArgumentTypeError(error)
+
+
 def main():
     """Program entry point"""
     parser = argparse.ArgumentParser(description="Create a video contact sheet")
@@ -669,6 +684,18 @@ def main():
         type=metadata_position,
         default=DEFAULT_METADATA_POSITION)
     parser.add_argument(
+        "--background-color",
+        help="Color of the background in hexadecimal, for example AABBCC",
+        dest="background_color",
+        type=hex_color,
+        default=hex_color(DEFAULT_BACKGROUND_COLOR))
+    parser.add_argument(
+        "--metadata-font-color",
+        help="Color of the metadata font in hexadecimal, for example AABBCC",
+        dest="metadata_font_color",
+        type=hex_color,
+        default=hex_color(DEFAULT_METADATA_FONT_COLOR))
+    parser.add_argument(
         "-v", "--verbose",
         action="store_true",
         help="display verbose messages",
@@ -723,7 +750,9 @@ def main():
         timestamp_font_size=args.timestamp_font_size,
         grid_horizontal_spacing=args.grid_horizontal_spacing,
         grid_vertical_spacing=args.grid_vertical_spacing,
-        metadata_position=args.metadata_position
+        metadata_position=args.metadata_position,
+        background_color=args.background_color,
+        metadata_font_color=args.metadata_font_color
         )
 
     print("Cleaning up temporary files...")
