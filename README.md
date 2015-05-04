@@ -19,7 +19,7 @@ The above contact sheets were generated from a movie called "Big Buck Bunny".
 
 ## Installation
 
-vcsi is currently available for the following systems:
+vcsi is currently packaged for the following systems:
 
 | Linux packages | |
 | -------------- | --- |
