@@ -5,9 +5,9 @@ Create video contact sheets. A video contact sheet is an image composed of video
 ## Examples
 
 ```
-$ vcsi bbb_sunflower_1080p_60fps_normal.mp4 -t -n 3 -s 10 -w 400
+$ vcsi bbb_sunflower_1080p_60fps_normal.mp4 -t -w 725 --background-color 000000 --metadata-font-color ffffff -g 4x4 --end-delay-percent 20
 ```
-![Image](<http://i.imgur.com/HI6gg8f.png>)
+![Image](<http://i.imgur.com/kEgQ4xl.png>)
 
 ```
 $ vcsi bbb_sunflower_1080p_60fps_normal.mp4 -t -w 725 -g 3x5 -o output.png --end-delay-percent 20
