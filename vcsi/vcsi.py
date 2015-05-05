@@ -122,8 +122,8 @@ class MediaInfo():
 
         self.filename = os.path.basename(format_dict["filename"])
 
-        size_bytes = int(format_dict["size"])
-        self.size = self.human_readable_size(size_bytes)
+        self.size_bytes = int(format_dict["size"])
+        self.size = self.human_readable_size(self.size_bytes)
 
     def pretty_duration(
             self,
