@@ -8,5 +8,11 @@ python:
 
 install:
   - pip install -r requirements.txt
+  - pip install nosexcoverage
+  - pip install coveralls
 
-script: nosetests
+script:
+  nosetests --with-xcoverage --cover-package vcsi
+
+after_success:
+  coveralls
