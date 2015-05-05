@@ -449,7 +449,7 @@ def compose_contact_sheet(
     header_lines += ["Dimensions: %sx%s" % (media_info.sample_width, media_info.sample_height)]
 
     line_spacing_coefficient = 1.2
-    header_line_height = int(metadata_font_dimensions[1] * line_spacing_coefficient)
+    header_line_height = int(metadata_font_size * line_spacing_coefficient)
 
     header_height = 2 * header_margin + len(header_lines) * header_line_height
 
