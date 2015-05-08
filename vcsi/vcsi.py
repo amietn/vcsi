@@ -275,14 +275,14 @@ def select_sharpest_images(
     end_delay_seconds = math.floor(media_info.duration_seconds * end_delay_percent / 100)
 
     delay = start_delay_seconds + end_delay_seconds
-    capture_interval = (media_info.duration_seconds - delay) / num_samples
+    capture_interval = (media_info.duration_seconds - delay) / (num_samples + 1)
     end = int(media_info.duration_seconds - end_delay_seconds)
 
     def timestamps():
-        i = start_delay_seconds
-        while i <= end:
-            yield (i, media_info.pretty_duration(i, show_millis=True))
-            i += capture_interval
+        time = start_delay_seconds + capture_interval
+        for i in range(num_samples):
+            yield (time, media_info.pretty_duration(time, show_millis=True))
+            time += capture_interval
 
     # compute desired_size
     desired_size = grid_desired_size(grid, media_info, width=width, horizontal_margin=grid_horizontal_spacing)
