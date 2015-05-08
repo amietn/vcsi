@@ -436,11 +436,15 @@ def compose_contact_sheet(
     max_width = width - 2 * header_margin
     width_excess = filename_width - max_width
 
-    if width_excess > 0:
-        excess_ratio = filename_width / max_width
-        max_line_length = len(media_info.filename) / excess_ratio
-    else:
-        max_line_length = 1000
+    # find number of characters that fit in max_width
+    max_line_length = 0
+    for i in range(len(media_info.filename) + 1):
+        text_chunk = media_info.filename[:i]
+        text_width = header_font.getsize(text_chunk)[0]
+
+        max_line_length = i
+        if text_width > max_width:
+            break
 
     header_lines = []
     header_lines += textwrap.wrap(media_info.filename, max_line_length)
