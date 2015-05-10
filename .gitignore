@@ -1,0 +1,7 @@
+/packaging
+!packaging/arch-vcsi-git/PKGBUILD
+!packaging/arch-vcsi/PKGBUILD
+/.coverage
+/.coveralls.yml
+/coverage.xml
+__pycache__
