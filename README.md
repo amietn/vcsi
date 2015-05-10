@@ -149,6 +149,7 @@ Resolution: {{sample_width}}x{{sample_height}}
 ## Exposed metadata template attributes
 
 | Attribute name | Description | Example |
+| --- | --- | --- |
 | size | File size (pretty format) | 128.3 MiB |
 | size_bytes | File size (bytes) | 4662788373 |
 | filename | File name | video.mkv |
