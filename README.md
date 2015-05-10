@@ -123,3 +123,46 @@ optional arguments:
                         TTF font used for timestamps
   -v, --verbose         display verbose messages
 ```
+
+## Metadata templates
+
+`vcsi` now supports metadata templates thanks to jinja2. In order to use custom templates one should specify to the template file with the `--template` argument.
+
+Here is an example template file:
+
+```
+{{filename}}
+File size: {{size}}
+{% if audio_sample_rate %}
+Audio sample rate: {{audio_sample_rate/1000}} KHz
+{% endif %}
+
+{% if audio_bit_rate %}
+Audio bitrate: {{audio_bit_rate/1000}} Kbps
+{% endif %}
+
+{{frame_rate}} fps
+
+Resolution: {{sample_width}}x{{sample_height}}
+```
+
+## Exposed metadata template attributes
+
+| Attribute name | Description | Example |
+| size | File size (pretty format) | 128.3 MiB |
+| size_bytes | File size (bytes) | 4662788373 |
+| filename | File name | video.mkv |
+| duration | Duration (pretty format) | 03:07 |
+| sample_width | Width of samples (pixels) | 1920 |
+| sample_height | Height of samples (pixels) | 1080 |
+| display_width | Display width (pixels) | 1920 |
+| display_height | Display height (pixels) | 1080 |
+| video_codec | Video codec | h264 |
+| video_codec_long | Video codec (long name) | H.264 / AVC / MPEG-4 AVC / MPEG-4 part 10 |
+| display_aspect_ratio | Display aspect ratio | 16:9 |
+| sample_aspect_ratio | Sample aspect ratio | 1:1 |
+| audio_codec | Audio codec | aac |
+| audio_codec_long | Audio codec (long name) | AAC (Advanced Audio Coding) |
+| audio_sample_rate | Audio sample rate (Hz) | 44100 |
+| audio_bit_rate | Audio bit rate | 192000 |
+| frame_rate | Frame rate (fps) | 23.974 |
