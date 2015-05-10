@@ -225,9 +225,9 @@ class MediaInfo():
             self.audio_codec_long = None
 
         try:
-            self.audio_sample_rate_hz = int(self.audio_stream["sample_rate"])
+            self.audio_sample_rate = int(self.audio_stream["sample_rate"])
         except KeyError:
-            self.audio_sample_rate_hz = None
+            self.audio_sample_rate = None
 
         try:
             self.audio_bit_rate = int(self.audio_stream["bit_rate"])
@@ -250,7 +250,7 @@ class MediaInfo():
             "sample_aspect_ratio": self.sample_aspect_ratio,
             "audio_codec": self.audio_codec,
             "audio_codec_long": self.audio_codec_long,
-            "audio_sample_rate_hz": self.audio_sample_rate_hz,
+            "audio_sample_rate": self.audio_sample_rate,
             "audio_bit_rate": self.audio_bit_rate,
             "frame_rate": self.frame_rate
         }
