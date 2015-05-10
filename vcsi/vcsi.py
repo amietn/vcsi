@@ -14,6 +14,7 @@ from collections import namedtuple
 
 from PIL import Image, ImageDraw, ImageFont
 import numpy
+from jinja2 import Template
 
 __author__ = "Nils Amiet"
 
@@ -161,6 +162,19 @@ class MediaInfo():
         ratio = width / self.display_width
         desired_height = math.floor(self.display_height * ratio)
         return (int(width), int(desired_height))
+
+    def template_attributes(self):
+        attributes = {
+            "size": self.size,
+            "size_bytes": self.size_bytes,
+            "filename": self.filename,
+            "duration": self.duration,
+            "sample_width": self.sample_width,
+            "sample_height": self.sample_height,
+            "display_width": self.display_width,
+            "display_height": self.display_height
+        }
+        return attributes
 
 
 class MediaCapture():
@@ -418,10 +432,14 @@ def max_line_length(
         media_info,
         metadata_font,
         header_margin,
-        width=DEFAULT_CONTACT_SHEET_WIDTH):
+        width=DEFAULT_CONTACT_SHEET_WIDTH,
+        text=None):
     """Find the number of characters that fit in width with given font.
     """
-    metadata_font_dimensions = metadata_font.getsize(media_info.filename)
+    if text is None:
+        text = media_info.filename
+
+    metadata_font_dimensions = metadata_font.getsize(text)
     filename_width = metadata_font_dimensions[0]
     max_width = width - 2 * header_margin
 
@@ -437,16 +455,28 @@ def max_line_length(
     return max_length
 
 
-def prepare_metadata_text_lines(media_info, header_font, header_margin, width):
+def prepare_metadata_text_lines(media_info, header_font, header_margin, width, template_path=None):
     """Prepare the metadata header text and return a list containing each line.
     """
-    max_metadata_line_length = max_line_length(media_info, header_font, header_margin, width=width)
+    template = ""
+    if template_path is None:
+        template = """{{filename}}
+        File size: {{size}}
+        Duration: {{duration}}
+        Dimensions: {{sample_width}}x{{sample_height}}"""
+    else:
+        with open(template_path) as f:
+            template = f.read()
+
+    params = media_info.template_attributes()
+    template = Template(template).render(params)
+    template_lines = template.split("\n")
+    template_lines = [x.strip() for x in template_lines]
 
     header_lines = []
-    header_lines += textwrap.wrap(media_info.filename, max_metadata_line_length)
-    header_lines += ["File size: %s" % media_info.size]
-    header_lines += ["Duration: %s" % media_info.duration]
-    header_lines += ["Dimensions: %sx%s" % (media_info.sample_width, media_info.sample_height)]
+    for line in template_lines:
+        max_metadata_line_length = max_line_length(media_info, header_font, header_margin, width=width, text=line)
+        header_lines += textwrap.wrap(line, max_metadata_line_length)
 
     return header_lines
 
@@ -470,7 +500,8 @@ def compose_contact_sheet(
         timestamp_background_color=DEFAULT_TIMESTAMP_BACKGROUND_COLOR,
         timestamp_horizontal_spacing=5,
         timestamp_vertical_spacing=5,
-        header_margin=10):
+        header_margin=10,
+        template_path=None):
     """Creates a video contact sheet with the media information in a header
     and the selected frames arranged on a mxn grid with optional timestamps
     """
@@ -480,7 +511,7 @@ def compose_contact_sheet(
     header_font = ImageFont.truetype(metadata_font, metadata_font_size)
     timestamp_font = ImageFont.truetype(timestamp_font, timestamp_font_size)
 
-    header_lines = prepare_metadata_text_lines(media_info, header_font, header_margin, width)
+    header_lines = prepare_metadata_text_lines(media_info, header_font, header_margin, width, template_path=template_path)
 
     line_spacing_coefficient = 1.2
     header_line_height = int(metadata_font_size * line_spacing_coefficient)
@@ -755,6 +786,11 @@ def main():
         type=hex_color_type,
         default=hex_color_type(DEFAULT_TIMESTAMP_BACKGROUND_COLOR))
     parser.add_argument(
+        "--template",
+        help="Path to metadata template file",
+        dest="metadata_template_path",
+        default=None)
+    parser.add_argument(
         "-v", "--verbose",
         action="store_true",
         help="display verbose messages",
@@ -812,7 +848,8 @@ def main():
         background_color=args.background_color,
         metadata_font_color=args.metadata_font_color,
         timestamp_font_color=args.timestamp_font_color,
-        timestamp_background_color=args.timestamp_background_color
+        timestamp_background_color=args.timestamp_background_color,
+        template_path=args.metadata_template_path
         )
 
     save_image(image, media_info, output_path)
