@@ -1,13 +1,13 @@
 # Maintainer: Nils Amiet <amietn@foobar>
 pkgname=vcsi
-pkgver=2
+pkgver=3
 pkgrel=1
 pkgdesc="Create video contact sheets, thumbnails"
 arch=(any)
 url="https://github.com/amietn/vcsi"
 license=('MIT')
 groups=()
-depends=(python ffmpeg python-numpy python-pillow)
+depends=(python ffmpeg python-numpy python-pillow python-jinja)
 makedepends=()
 provides=()
 conflicts=()
