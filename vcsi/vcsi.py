@@ -44,8 +44,10 @@ class MediaInfo():
     def __init__(self, path, verbose=False):
         self.probe_media(path)
         self.find_video_stream()
+        self.find_audio_stream()
         self.compute_display_resolution()
         self.compute_format()
+        self.parse_attributes()
 
         if verbose:
             print(self.filename)
@@ -85,6 +87,17 @@ class MediaInfo():
             try:
                 if stream["codec_type"] == "video":
                     self.video_stream = stream
+                    break
+            except:
+                pass
+
+    def find_audio_stream(self):
+        """Find the first stream which is an audio stream
+        """
+        for stream in self.ffprobe_dict["streams"]:
+            try:
+                if stream["codec_type"] == "audio":
+                    self.audio_stream = stream
                     break
             except:
                 pass
@@ -163,6 +176,64 @@ class MediaInfo():
         desired_height = math.floor(self.display_height * ratio)
         return (int(width), int(desired_height))
 
+    def parse_attributes(self):
+        """Parse multiple media attributes
+        """
+        # video
+        try:
+            self.video_codec = self.video_stream["codec_name"]
+        except KeyError:
+            self.video_codec = None
+
+        try:
+            self.video_codec_long = self.video_stream["codec_long_name"]
+        except KeyError:
+            self.video_codec_long = None
+
+        try:
+            self.sample_aspect_ratio = self.video_stream["sample_aspect_ratio"]
+        except KeyError:
+            self.sample_aspect_ratio = None
+
+        try:
+            self.display_aspect_ratio = self.video_stream["display_aspect_ratio"]
+        except KeyError:
+            self.display_aspect_ratio = None
+
+        try:
+            self.frame_rate = self.video_stream["avg_frame_rate"]
+            splits = self.frame_rate.split("/")
+
+            if len(splits) == 2:
+                self.frame_rate = int(splits[0]) / int(splits[1])
+            else:
+                self.frame_rate = int(self.frame_rate)
+
+            self.frame_rate = round(self.frame_rate, 3)
+        except KeyError:
+            self.frame_rate = None
+
+        # audio
+        try:
+            self.audio_codec = self.audio_stream["codec_name"]
+        except KeyError:
+            self.audio_codec = None
+
+        try:
+            self.audio_codec_long = self.audio_stream["codec_long_name"]
+        except KeyError:
+            self.audio_codec_long = None
+
+        try:
+            self.audio_sample_rate_hz = int(self.audio_stream["sample_rate"])
+        except KeyError:
+            self.audio_sample_rate_hz = None
+
+        try:
+            self.audio_bit_rate = int(self.audio_stream["bit_rate"])
+        except KeyError:
+            self.audio_bit_rate = None
+
     def template_attributes(self):
         attributes = {
             "size": self.size,
@@ -172,7 +243,16 @@ class MediaInfo():
             "sample_width": self.sample_width,
             "sample_height": self.sample_height,
             "display_width": self.display_width,
-            "display_height": self.display_height
+            "display_height": self.display_height,
+            "video_codec": self.video_codec,
+            "video_codec_long": self.video_codec_long,
+            "display_aspect_ratio": self.display_aspect_ratio,
+            "sample_aspect_ratio": self.sample_aspect_ratio,
+            "audio_codec": self.audio_codec,
+            "audio_codec_long": self.audio_codec_long,
+            "audio_sample_rate_hz": self.audio_sample_rate_hz,
+            "audio_bit_rate": self.audio_bit_rate,
+            "frame_rate": self.frame_rate
         }
         return attributes
 
@@ -440,12 +520,11 @@ def max_line_length(
         text = media_info.filename
 
     metadata_font_dimensions = metadata_font.getsize(text)
-    filename_width = metadata_font_dimensions[0]
     max_width = width - 2 * header_margin
 
     max_length = 0
-    for i in range(len(media_info.filename) + 1):
-        text_chunk = media_info.filename[:i]
+    for i in range(len(text) + 1):
+        text_chunk = text[:i]
         text_width = metadata_font.getsize(text_chunk)[0]
 
         max_length = i
@@ -471,7 +550,7 @@ def prepare_metadata_text_lines(media_info, header_font, header_margin, width, t
     params = media_info.template_attributes()
     template = Template(template).render(params)
     template_lines = template.split("\n")
-    template_lines = [x.strip() for x in template_lines]
+    template_lines = [x.strip() for x in template_lines if len(x) > 0]
 
     header_lines = []
     for line in template_lines:

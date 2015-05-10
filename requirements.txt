@@ -1,2 +1,3 @@
 numpy==1.9.2
 Pillow==2.8.1
+jinja2
