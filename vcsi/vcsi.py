@@ -36,6 +36,10 @@ DEFAULT_BACKGROUND_COLOR = "FFFFFF"
 DEFAULT_TIMESTAMP_FONT_COLOR = "FFFFFF"
 DEFAULT_TIMESTAMP_BACKGROUND_COLOR = "282828"
 
+Grid = namedtuple('Grid', ['x', 'y'])
+Frame = namedtuple('Frame', ['filename', 'blurriness', 'timestamp', 'avg_color'])
+Color = namedtuple('Color', ['r', 'g', 'b'])
+
 
 class MediaInfo():
     """Collect information about a video file
@@ -394,7 +398,6 @@ def select_sharpest_images(
         num_groups = num_selected
 
     desired_size = grid_desired_size(grid, media_info, width=width, horizontal_margin=grid_horizontal_spacing)
-    Frame = namedtuple('Frame', ['filename', 'blurriness', 'timestamp', 'avg_color'])
     blurs = []
     timestamps = timestamp_generator(media_info, start_delay_percent, end_delay_percent, num_samples)
 
@@ -704,7 +707,6 @@ def mxn_type(string):
         split = string.split("x")
         m = int(split[0])
         n = int(split[1])
-        Grid = namedtuple('Grid', ['x', 'y'])
         return Grid(m, n)
     except:
         raise argparse.ArgumentTypeError("Grid must be of the form mxn, where m is the number of columns and n is the number of rows.")
@@ -729,7 +731,6 @@ def hex_color_type(string):
     For example AABBCC. An exception will be raised if the argument is not of that form.
     """
     try:
-        Color = namedtuple('Color', ['r', 'g', 'b'])
         components = tuple(bytes.fromhex(string))
         c = Color(*components)
         return c

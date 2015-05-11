@@ -5,3 +5,4 @@
 /.coveralls.yml
 /coverage.xml
 __pycache__
+/cover

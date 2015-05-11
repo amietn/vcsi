@@ -4,6 +4,7 @@ from nose.tools import assert_raises
 from nose.tools import assert_equals
 
 from vcsi.vcsi import MediaInfo
+from vcsi.vcsi import Grid, grid_desired_size
 
 
 FFPROBE_EXAMPLE_JSON_PATH = "tests/data/bbb_ffprobe.json"
@@ -12,14 +13,11 @@ FFPROBE_EXAMPLE_JSON_PATH = "tests/data/bbb_ffprobe.json"
 class MediaInfoForTest(MediaInfo):
 
     def __init__(self, json_path):
-        self.ffprobe_dict = self.mock_dict(json_path)
-        self.find_video_stream()
-        self.compute_display_resolution()
-        self.compute_format()
+        super().__init__(json_path)
 
-    def mock_dict(self, json_path):
-        with open(json_path) as f:
-            return json.loads(f.read())
+    def probe_media(self, path):
+        with open(path) as f:
+            self.ffprobe_dict = json.loads(f.read())
 
 
 def test_compute_display_resolution():
@@ -51,3 +49,29 @@ def test_size_bytes():
 def test_size():
     mi = MediaInfoForTest(FFPROBE_EXAMPLE_JSON_PATH)
     assert_equals(mi.size, "339.4 MiB")
+
+
+def test_template_attributes():
+    mi = MediaInfoForTest(FFPROBE_EXAMPLE_JSON_PATH)
+    attributes = mi.template_attributes()
+    assert_equals(attributes["audio_codec"], "mp3")
+    assert_equals(attributes["video_codec"], "h264")
+
+
+def test_grid_desired_size():
+    mi = MediaInfoForTest(FFPROBE_EXAMPLE_JSON_PATH)
+    x = 2
+    y = 3
+    grid = Grid(x, y)
+    width = 800
+    hmargin = 20
+    s = grid_desired_size(grid, mi, width=width, horizontal_margin=hmargin)
+    expected_width = (width - (x-1) * hmargin) / x
+
+    assert_equals(s[0], expected_width)
+
+
+def test_desired_size():
+    mi = MediaInfoForTest(FFPROBE_EXAMPLE_JSON_PATH)
+    s = mi.desired_size(width=1280)
+    assert_equals(s[1], 720)
