@@ -557,8 +557,12 @@ def prepare_metadata_text_lines(media_info, header_font, header_margin, width, t
 
     header_lines = []
     for line in template_lines:
-        max_metadata_line_length = max_line_length(media_info, header_font, header_margin, width=width, text=line)
-        header_lines += textwrap.wrap(line, max_metadata_line_length)
+        remaining_chars = line
+        while len(remaining_chars) > 0:
+            max_metadata_line_length = max_line_length(media_info, header_font, header_margin, width=width, text=remaining_chars)
+            wraps = textwrap.wrap(remaining_chars, max_metadata_line_length)
+            header_lines.append(wraps[0])
+            remaining_chars = remaining_chars[len(wraps[0]):].strip()
 
     return header_lines
 
