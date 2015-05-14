@@ -5,6 +5,7 @@ from nose.tools import assert_equals
 
 from vcsi.vcsi import MediaInfo
 from vcsi.vcsi import Grid, grid_desired_size
+from vcsi.vcsi import timestamp_generator
 
 
 FFPROBE_EXAMPLE_JSON_PATH = "tests/data/bbb_ffprobe.json"
@@ -75,3 +76,31 @@ def test_desired_size():
     mi = MediaInfoForTest(FFPROBE_EXAMPLE_JSON_PATH)
     s = mi.desired_size(width=1280)
     assert_equals(s[1], 720)
+
+
+def test_timestamps():
+    mi = MediaInfoForTest(FFPROBE_EXAMPLE_JSON_PATH)
+    mi.duration_seconds = 100
+    start_delay_percent = 7
+    end_delay_percent = 7
+    interval = mi.duration_seconds - (start_delay_percent + end_delay_percent)
+    num_samples = interval - 1
+
+    expected_timestamp = start_delay_percent + 1
+    for t in timestamp_generator(mi, 7, 7, 85):
+        assert_equals(int(t[0]), expected_timestamp)
+        expected_timestamp += 1
+
+
+def test_pretty_duration_centis_limit():
+    mi = MediaInfoForTest(FFPROBE_EXAMPLE_JSON_PATH)
+    mi.duration_seconds = 1.9999
+    pretty_duration = mi.pretty_duration(mi.duration_seconds, show_centis=True)
+    assert_equals(pretty_duration, "00:01.99")
+
+
+def test_pretty_duration_millis_limit():
+    mi = MediaInfoForTest(FFPROBE_EXAMPLE_JSON_PATH)
+    mi.duration_seconds = 1.9999
+    pretty_duration = mi.pretty_duration(mi.duration_seconds, show_millis=True)
+    assert_equals(pretty_duration, "00:01.999")

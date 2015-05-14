@@ -165,10 +165,11 @@ class MediaInfo():
 
         duration += "%s:%s" % (str(minutes).zfill(2), str(math.floor(remaining_seconds)).zfill(2))
 
-        if show_centis:
+        if show_centis or show_millis:
             coeff = 1000 if show_millis else 100
-            centis = round((remaining_seconds - math.floor(remaining_seconds)) * coeff)
-            duration += ".%s" % (str(centis).zfill(2))
+            digits = 3 if show_millis else 2
+            centis = math.floor((remaining_seconds - math.floor(remaining_seconds)) * coeff)
+            duration += ".%s" % (str(centis).zfill(digits))
 
         return duration
 
