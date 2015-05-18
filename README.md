@@ -55,9 +55,10 @@ Python modules:
 
 * numpy
 * pillow
+* jinja2
 
 
-Must be in PATH:
+Must be in your PATH:
 
 * ffmpeg
 * ffprobe
@@ -126,9 +127,9 @@ optional arguments:
 
 ## Metadata templates
 
-`vcsi` now supports metadata templates thanks to jinja2. In order to use custom templates one should specify to the template file with the `--template` argument.
+`vcsi` now supports metadata templates thanks to jinja2. In order to use custom templates one should use the `--template` argument to specifiy the path to a template file.
 
-Here is an example template file:
+Here is a sample template file:
 
 ```
 {{filename}}
