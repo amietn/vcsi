@@ -145,6 +145,27 @@ class MediaInfo():
         self.size_bytes = int(format_dict["size"])
         self.size = self.human_readable_size(self.size_bytes)
 
+    def pretty_to_seconds(
+        pretty_duration):
+        """Converts pretty printed timestamp to seconds
+        """
+        millis_split = pretty_duration.split(".")
+        millis = 0
+        if len(millis_split) == 2:
+            millis = int(millis_split[1])
+            left = millis_split[0]
+        else:
+            left = pretty_duration
+
+        left_split = left.split(":")
+        hours = int(left_split[0])
+        minutes = int(left_split[1])
+        seconds = int(left_split[2])
+
+        result = (millis/1000.0) + seconds + minutes * 60 + hours * 3600
+        return result
+
+
     def pretty_duration(
             self,
             seconds,
@@ -379,7 +400,8 @@ def select_sharpest_images(
         end_delay_percent=7,
         width=DEFAULT_CONTACT_SHEET_WIDTH,
         grid=None,
-        grid_horizontal_spacing=DEFAULT_GRID_HORIZONTAL_SPACING):
+        grid_horizontal_spacing=DEFAULT_GRID_HORIZONTAL_SPACING,
+        manual_timestamps=None):
     """Make `num_samples` captures and select `num_selected` captures out of these
     based on blurriness and color variety.
     """
@@ -393,14 +415,17 @@ def select_sharpest_images(
     if num_selected > num_samples:
         num_samples = num_selected
 
-    # make sure num_samples if large enough
+    # make sure num_samples is large enough
     if num_samples < num_selected or num_samples < num_groups:
         num_samples = num_selected
         num_groups = num_selected
 
     desired_size = grid_desired_size(grid, media_info, width=width, horizontal_margin=grid_horizontal_spacing)
     blurs = []
-    timestamps = timestamp_generator(media_info, start_delay_percent, end_delay_percent, num_samples)
+    if manual_timestamps == None:
+        timestamps = timestamp_generator(media_info, start_delay_percent, end_delay_percent, num_samples)
+    else:
+        timestamps = [(MediaInfo.pretty_to_seconds(x), x) for x in manual_timestamps]
 
     for i, timestamp in enumerate(timestamps):
         status = "Sampling... %s/%s" % ((i+1), num_samples)
@@ -714,7 +739,8 @@ def mxn_type(string):
         n = int(split[1])
         return Grid(m, n)
     except:
-        raise argparse.ArgumentTypeError("Grid must be of the form mxn, where m is the number of columns and n is the number of rows.")
+        error = "Grid must be of the form mxn, where m is the number of columns and n is the number of rows."
+        raise argparse.ArgumentTypeError(error)
 
 
 def metadata_position_type(string):
@@ -741,6 +767,25 @@ def hex_color_type(string):
         return c
     except:
         error = "Color must be an hexadecimal number, for example AABBCC"
+        raise argparse.ArgumentTypeError(error)
+
+
+def manual_timestamps(string):
+    """Type parser for argparse. Argument must be a comma-seperated list of frame timestamps.
+    For example 1:11:11.111,2:22:22.222
+    """
+    try:
+        timestamps = string.split(",")
+        timestamps = [x.strip() for x in timestamps if x]
+
+        # check whether timestamps are valid
+        for t in timestamps:
+            MediaInfo.pretty_to_seconds(t)
+
+        return timestamps
+    except Exception as e:
+        print(e)
+        error = "Manual frame timestamps must be comma-seperated and of the form h:mm:ss.mmmm"
         raise argparse.ArgumentTypeError(error)
 
 
@@ -876,6 +921,12 @@ def main():
         dest="metadata_template_path",
         default=None)
     parser.add_argument(
+        "-m", "--manual",
+        help="Comma-seperated list of frame timestamps to use, for example 1:11:11.111,2:22:22.222",
+        dest="manual_timestamps",
+        type=manual_timestamps,
+        default=None)
+    parser.add_argument(
         "-v", "--verbose",
         action="store_true",
         help="display verbose messages",
@@ -904,6 +955,21 @@ def main():
         args.grid_horizontal_spacing = args.grid_spacing
         args.grid_vertical_spacing = args.grid_spacing
 
+    # manual frame selection
+    if args.manual_timestamps is not None:
+        mframes_size = len(args.manual_timestamps)
+        print(mframes_size)
+        grid_size = args.mxn.x * args.mxn.y
+
+        args.num_frames = mframes_size
+        num_selected = mframes_size
+        args.num_samples = mframes_size
+
+        if not mframes_size == grid_size:
+            args.mxn = Grid(1, mframes_size)
+
+        print(args.manual_timestamps)
+
     selected_frames, temp_frames = select_sharpest_images(
         media_info,
         media_capture,
@@ -913,7 +979,8 @@ def main():
         grid=args.mxn,
         start_delay_percent=args.start_delay_percent,
         end_delay_percent=args.end_delay_percent,
-        grid_horizontal_spacing=args.grid_horizontal_spacing
+        grid_horizontal_spacing=args.grid_horizontal_spacing,
+        manual_timestamps=args.manual_timestamps
         )
 
     print("Composing contact sheet...")
