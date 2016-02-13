@@ -986,7 +986,7 @@ def main():
     output_path = args.output_path
 
     media_info = MediaInfo(path, verbose=args.is_verbose)
-    media_capture = MediaCapture(path, accurate=args.is_accurate)
+    media_capture = MediaCapture(path, accurate=args.is_accurate, skip_delay_seconds=args.accurate_delay_seconds)
 
     num_selected = args.num_frames
 
