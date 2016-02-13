@@ -95,12 +95,12 @@ def test_timestamps():
 def test_pretty_duration_centis_limit():
     mi = MediaInfoForTest(FFPROBE_EXAMPLE_JSON_PATH)
     mi.duration_seconds = 1.9999
-    pretty_duration = mi.pretty_duration(mi.duration_seconds, show_centis=True)
+    pretty_duration = MediaInfo.pretty_duration(mi.duration_seconds, show_centis=True)
     assert_equals(pretty_duration, "00:01.99")
 
 
 def test_pretty_duration_millis_limit():
     mi = MediaInfoForTest(FFPROBE_EXAMPLE_JSON_PATH)
     mi.duration_seconds = 1.9999
-    pretty_duration = mi.pretty_duration(mi.duration_seconds, show_millis=True)
+    pretty_duration = MediaInfo.pretty_duration(mi.duration_seconds, show_millis=True)
     assert_equals(pretty_duration, "00:01.999")

@@ -35,6 +35,7 @@ DEFAULT_METADATA_FONT_COLOR = "000000"
 DEFAULT_BACKGROUND_COLOR = "FFFFFF"
 DEFAULT_TIMESTAMP_FONT_COLOR = "FFFFFF"
 DEFAULT_TIMESTAMP_BACKGROUND_COLOR = "282828"
+DEFAULT_ACCURATE_DELAY_SECONDS = 1
 
 Grid = namedtuple('Grid', ['x', 'y'])
 Frame = namedtuple('Frame', ['filename', 'blurriness', 'timestamp', 'avg_color'])
@@ -138,7 +139,7 @@ class MediaInfo():
         format_dict = self.ffprobe_dict["format"]
 
         self.duration_seconds = float(format_dict["duration"])
-        self.duration = self.pretty_duration(self.duration_seconds)
+        self.duration = MediaInfo.pretty_duration(self.duration_seconds)
 
         self.filename = os.path.basename(format_dict["filename"])
 
@@ -158,16 +159,20 @@ class MediaInfo():
             left = pretty_duration
 
         left_split = left.split(":")
-        hours = int(left_split[0])
-        minutes = int(left_split[1])
-        seconds = int(left_split[2])
+        if  len(left_split) < 3:
+            hours = 0
+            minutes = int(left_split[0])
+            seconds = int(left_split[1])
+        else:
+            hours = int(left_split[0])
+            minutes = int(left_split[1])
+            seconds = int(left_split[2])
 
         result = (millis/1000.0) + seconds + minutes * 60 + hours * 3600
         return result
 
 
     def pretty_duration(
-            self,
             seconds,
             show_centis=False,
             show_millis=False):
@@ -287,12 +292,16 @@ class MediaCapture():
     """Capture frames of a video
     """
 
-    def __init__(self, path):
+    def __init__(self, path, accurate=False, skip_delay_seconds=DEFAULT_ACCURATE_DELAY_SECONDS):
         self.path = path
+        self.accurate = accurate
+        self.skip_delay_seconds = skip_delay_seconds
 
     def make_capture(self, time, width, height, out_path="out.png"):
         """Capture a frame at given time with given width and height using ffmpeg
         """
+        skip_delay = MediaInfo.pretty_duration(self.skip_delay_seconds, show_millis=True)
+
         ffmpeg_command = [
             "ffmpeg",
             "-ss", time,
@@ -302,6 +311,34 @@ class MediaCapture():
             "-y",
             out_path
         ]
+
+        if self.accurate:
+            time_seconds = MediaInfo.pretty_to_seconds(time)
+            skip_time_seconds = time_seconds - self.skip_delay_seconds
+
+            if skip_time_seconds < 0:
+                ffmpeg_command = [
+                    "ffmpeg",
+                    "-i", self.path,
+                    "-ss", time,
+                    "-vframes", "1",
+                    "-s", "%sx%s" % (width, height),
+                    "-y",
+                    out_path
+                ]
+            else:
+                skip_time = MediaInfo.pretty_duration(skip_time_seconds, show_millis=True)
+                ffmpeg_command = [
+                    "ffmpeg",
+                    "-ss", skip_time,
+                    "-i", self.path,
+                    "-ss", skip_delay,
+                    "-vframes", "1",
+                    "-s", "%sx%s" % (width, height),
+                    "-y",
+                    out_path
+                ]
+
 
         subprocess.call(ffmpeg_command, stderr=subprocess.DEVNULL, stdout=subprocess.DEVNULL)
 
@@ -386,7 +423,7 @@ def timestamp_generator(media_info, start_delay_percent, end_delay_percent, num_
     time = start_delay_seconds + capture_interval
 
     for i in range(num_samples):
-        yield (time, media_info.pretty_duration(time, show_millis=True))
+        yield (time, MediaInfo.pretty_duration(time, show_millis=True))
         time += capture_interval
 
 
@@ -664,7 +701,7 @@ def compose_contact_sheet(
 
         # show timestamp
         if show_timestamp:
-            pretty_timestamp = media_info.pretty_duration(frame.timestamp, show_centis=True)
+            pretty_timestamp = MediaInfo.pretty_duration(frame.timestamp, show_centis=True)
             text_size = timestamp_font.getsize(pretty_timestamp)
 
             # draw rectangle
@@ -931,6 +968,17 @@ def main():
         action="store_true",
         help="display verbose messages",
         dest="is_verbose")
+    parser.add_argument(
+        "-a", "--accurate",
+        action="store_true",
+        help="Make accurate captures. This capture mode is way slower than default but helps when capturing frames from HEVC videos.",
+        dest="is_accurate")
+    parser.add_argument(
+        "-A", "--accurate-delay-seconds",
+        type=int,
+        default=DEFAULT_ACCURATE_DELAY_SECONDS,
+        help="Fast skip to N seconds before capture time, then do accurate capture (decodes N seconds of video before each capture). This is used with accurate caputre mode only.",
+        dest="accurate_delay_seconds")
 
     args = parser.parse_args()
 
@@ -938,7 +986,7 @@ def main():
     output_path = args.output_path
 
     media_info = MediaInfo(path, verbose=args.is_verbose)
-    media_capture = MediaCapture(path)
+    media_capture = MediaCapture(path, accurate=args.is_accurate)
 
     num_selected = args.num_frames
 
