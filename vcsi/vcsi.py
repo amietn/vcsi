@@ -249,22 +249,22 @@ class MediaInfo():
         # audio
         try:
             self.audio_codec = self.audio_stream["codec_name"]
-        except KeyError:
+        except (KeyError, AttributeError):
             self.audio_codec = None
 
         try:
             self.audio_codec_long = self.audio_stream["codec_long_name"]
-        except KeyError:
+        except (KeyError, AttributeError):
             self.audio_codec_long = None
 
         try:
             self.audio_sample_rate = int(self.audio_stream["sample_rate"])
-        except KeyError:
+        except (KeyError, AttributeError):
             self.audio_sample_rate = None
 
         try:
             self.audio_bit_rate = int(self.audio_stream["bit_rate"])
-        except KeyError:
+        except (KeyError, AttributeError):
             self.audio_bit_rate = None
 
     def template_attributes(self):
