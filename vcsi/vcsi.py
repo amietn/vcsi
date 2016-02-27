@@ -243,6 +243,8 @@ class MediaInfo():
             self.frame_rate = round(self.frame_rate, 3)
         except KeyError:
             self.frame_rate = None
+        except ZeroDivisionError:
+            self.frame_rate = None
 
         # audio
         try:
