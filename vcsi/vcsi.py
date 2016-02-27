@@ -36,6 +36,7 @@ DEFAULT_BACKGROUND_COLOR = "FFFFFF"
 DEFAULT_TIMESTAMP_FONT_COLOR = "FFFFFF"
 DEFAULT_TIMESTAMP_BACKGROUND_COLOR = "282828"
 DEFAULT_ACCURATE_DELAY_SECONDS = 1
+DEFAULT_METADATA_MARGIN = 10
 
 Grid = namedtuple('Grid', ['x', 'y'])
 Frame = namedtuple('Frame', ['filename', 'blurriness', 'timestamp', 'avg_color'])
@@ -651,7 +652,7 @@ def compose_contact_sheet(
         timestamp_background_color=DEFAULT_TIMESTAMP_BACKGROUND_COLOR,
         timestamp_horizontal_spacing=5,
         timestamp_vertical_spacing=5,
-        header_margin=10,
+        header_margin=DEFAULT_METADATA_MARGIN,
         template_path=None):
     """Creates a video contact sheet with the media information in a header
     and the selected frames arranged on a mxn grid with optional timestamps
@@ -981,6 +982,12 @@ def main():
         default=DEFAULT_ACCURATE_DELAY_SECONDS,
         help="Fast skip to N seconds before capture time, then do accurate capture (decodes N seconds of video before each capture). This is used with accurate caputre mode only.",
         dest="accurate_delay_seconds")
+    parser.add_argument(
+        "--metadata-margin",
+        type=int,
+        default=DEFAULT_METADATA_MARGIN,
+        help="Margin (in pixels) in the metadata header.",
+        dest="metadata_margin")
 
     args = parser.parse_args()
 
@@ -1051,7 +1058,8 @@ def main():
         metadata_font_color=args.metadata_font_color,
         timestamp_font_color=args.timestamp_font_color,
         timestamp_background_color=args.timestamp_background_color,
-        template_path=args.metadata_template_path
+        template_path=args.metadata_template_path,
+        header_margin=args.metadata_margin
         )
 
     save_image(image, media_info, output_path)
