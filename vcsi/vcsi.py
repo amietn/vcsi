@@ -148,7 +148,7 @@ class MediaInfo():
         self.size = self.human_readable_size(self.size_bytes)
 
     def pretty_to_seconds(
-        pretty_duration):
+            pretty_duration):
         """Converts pretty printed timestamp to seconds
         """
         millis_split = pretty_duration.split(".")
@@ -160,7 +160,7 @@ class MediaInfo():
             left = pretty_duration
 
         left_split = left.split(":")
-        if  len(left_split) < 3:
+        if len(left_split) < 3:
             hours = 0
             minutes = int(left_split[0])
             seconds = int(left_split[1])
@@ -171,7 +171,6 @@ class MediaInfo():
 
         result = (millis/1000.0) + seconds + minutes * 60 + hours * 3600
         return result
-
 
     def pretty_duration(
             seconds,
@@ -342,7 +341,6 @@ class MediaCapture():
                     out_path
                 ]
 
-
         subprocess.call(ffmpeg_command, stderr=subprocess.DEVNULL, stdout=subprocess.DEVNULL)
 
     def compute_avg_color(self, image_path):
@@ -462,7 +460,7 @@ def select_sharpest_images(
 
     desired_size = grid_desired_size(grid, media_info, width=width, horizontal_margin=grid_horizontal_spacing)
     blurs = []
-    if manual_timestamps == None:
+    if manual_timestamps is None:
         timestamps = timestamp_generator(media_info, start_delay_percent, end_delay_percent, num_samples)
     else:
         timestamps = [(MediaInfo.pretty_to_seconds(x), x) for x in manual_timestamps]
@@ -833,7 +831,7 @@ def main():
     """Program entry point
     """
     parser = argparse.ArgumentParser(description="Create a video contact sheet")
-    parser.add_argument("filename")
+    parser.add_argument("filenames", nargs="+")
     parser.add_argument(
         "-o", "--output",
         help="save to output file",
@@ -988,10 +986,36 @@ def main():
         default=DEFAULT_METADATA_MARGIN,
         help="Margin (in pixels) in the metadata header.",
         dest="metadata_margin")
+    parser.add_argument(
+        "-r", "--recursive",
+        action="store_true",
+        help="Process every file in the specified directory recursively.",
+        dest="recursive")
 
     args = parser.parse_args()
 
-    path = args.filename
+    if args.recursive:
+        for path in args.filenames:
+            for root, subdirs, files in os.walk(path):
+                for f in files:
+                    filepath = os.path.join(root, f)
+                    process_file(filepath, args)
+    else:
+        for path in args.filenames:
+            if os.path.isdir(path):
+                for filepath in os.listdir(path):
+                    abs_filepath = os.path.join(path, filepath)
+                    if not os.path.isdir(abs_filepath):
+                        process_file(abs_filepath, args)
+            else:
+                process_file(path, args)
+
+
+def process_file(path, args):
+    """Generate a video contact sheet for the file at given path
+    """
+    print("Processing %s..." % (path))
+    
     output_path = args.output_path
 
     media_info = MediaInfo(path, verbose=args.is_verbose)
