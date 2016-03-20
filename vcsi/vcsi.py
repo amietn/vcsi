@@ -16,6 +16,7 @@ from PIL import Image, ImageDraw, ImageFont
 import numpy
 from jinja2 import Template
 
+__version__ = "5"
 __author__ = "Nils Amiet"
 
 
@@ -1021,6 +1022,10 @@ def main():
         default=DEFAULT_CAPTURE_ALPHA,
         help="Alpha channel value for the captures (transparency in range [0, 255]). Defaults to 255 (opaque)",
         dest="capture_alpha")
+    parser.add_argument(
+        "--version",
+        action="version",
+        version="%(prog)s version {version}".format(version=__version__))
 
     args = parser.parse_args()
 
