@@ -31,16 +31,17 @@ DEFAULT_GRID_SPACING = None
 DEFAULT_GRID_HORIZONTAL_SPACING = 5
 DEFAULT_GRID_VERTICAL_SPACING = DEFAULT_GRID_HORIZONTAL_SPACING
 DEFAULT_METADATA_POSITION = "top"
-DEFAULT_METADATA_FONT_COLOR = "000000"
-DEFAULT_BACKGROUND_COLOR = "FFFFFF"
-DEFAULT_TIMESTAMP_FONT_COLOR = "FFFFFF"
-DEFAULT_TIMESTAMP_BACKGROUND_COLOR = "282828"
+DEFAULT_METADATA_FONT_COLOR = "000000FF"
+DEFAULT_BACKGROUND_COLOR = "FFFFFFFF"
+DEFAULT_TIMESTAMP_FONT_COLOR = "FFFFFFFF"
+DEFAULT_TIMESTAMP_BACKGROUND_COLOR = "282828FF"
 DEFAULT_ACCURATE_DELAY_SECONDS = 1
 DEFAULT_METADATA_MARGIN = 10
+DEFAULT_CAPTURE_ALPHA = 255
 
 Grid = namedtuple('Grid', ['x', 'y'])
 Frame = namedtuple('Frame', ['filename', 'blurriness', 'timestamp', 'avg_color'])
-Color = namedtuple('Color', ['r', 'g', 'b'])
+Color = namedtuple('Color', ['r', 'g', 'b', 'a'])
 
 
 class MediaInfo():
@@ -651,7 +652,8 @@ def compose_contact_sheet(
         timestamp_horizontal_spacing=5,
         timestamp_vertical_spacing=5,
         header_margin=DEFAULT_METADATA_MARGIN,
-        template_path=None):
+        template_path=None,
+        capture_alpha=DEFAULT_CAPTURE_ALPHA):
     """Creates a video contact sheet with the media information in a header
     and the selected frames arranged on a mxn grid with optional timestamps
     """
@@ -670,15 +672,28 @@ def compose_contact_sheet(
     if metadata_position == "hidden":
         header_height = 0
 
-    image = Image.new("RGBA", (width, height + header_height), background_color)
+    final_image_width = width
+    final_image_height = height + header_height
+    transparent = (255, 255, 255, 0)
+
+    image = Image.new("RGBA", (final_image_width, final_image_height), background_color)
+    image_capture_layer = Image.new("RGBA", (final_image_width, final_image_height), transparent)
+    image_header_text_layer = Image.new("RGBA", (final_image_width, final_image_height), transparent)
+    image_timestamp_layer = Image.new("RGBA", (final_image_width, final_image_height), transparent)
+    image_timestamp_text_layer = Image.new("RGBA", (final_image_width, final_image_height), transparent)
+
     draw = ImageDraw.Draw(image)
+    draw_capture_layer = ImageDraw.Draw(image_capture_layer)
+    draw_header_text_layer = ImageDraw.Draw(image_header_text_layer)
+    draw_timestamp_layer = ImageDraw.Draw(image_timestamp_layer)
+    draw_timestamp_text_layer = ImageDraw.Draw(image_timestamp_text_layer)
     h = 0
 
     def draw_metadata_helper():
         """Draw metadata with fixed arguments
         """
         return draw_metadata(
-            draw,
+            draw_header_text_layer,
             header_margin=header_margin,
             header_line_height=header_line_height,
             header_lines=header_lines,
@@ -695,7 +710,8 @@ def compose_contact_sheet(
     frames = sorted(frames, key=lambda x: x.timestamp)
     for i, frame in enumerate(frames):
         f = Image.open(frame.filename)
-        image.paste(f, (w, h))
+        f.putalpha(capture_alpha)
+        image_capture_layer.paste(f, (w, h))
 
         # update x position early for timestamp
         w += desired_size[0] + grid_horizontal_spacing
@@ -716,13 +732,13 @@ def compose_contact_sheet(
                 upper_left[0] + text_size[0] + 2 * rectangle_hmargin,
                 upper_left[1] + text_size[1] + 2 * rectangle_vmargin
                 )
-            draw.rectangle(
+            draw_timestamp_layer.rectangle(
                 [upper_left, bottom_right],
                 fill=timestamp_background_color
                 )
 
             # draw timestamp
-            draw.text(
+            draw_timestamp_text_layer.text(
                 (
                     upper_left[0] + rectangle_hmargin,
                     upper_left[1] + rectangle_vmargin
@@ -745,7 +761,13 @@ def compose_contact_sheet(
         h -= grid_vertical_spacing
         h = draw_metadata_helper()
 
-    return image
+    # alpha blend
+    out_image = Image.alpha_composite(image, image_capture_layer)
+    out_image = Image.alpha_composite(out_image, image_header_text_layer)
+    out_image = Image.alpha_composite(out_image, image_timestamp_layer)
+    out_image = Image.alpha_composite(out_image, image_timestamp_text_layer)
+
+    return out_image
 
 
 def save_image(image, media_info, output_path):
@@ -797,14 +819,16 @@ def metadata_position_type(string):
 
 def hex_color_type(string):
     """Type parser for argparse. Argument must be an hexadecimal number representing a color.
-    For example AABBCC. An exception will be raised if the argument is not of that form.
+    For example 'AABBCC' (RGB) or 'AABBCCFF' (RGBA). An exception will be raised if the argument is not of that form.
     """
     try:
         components = tuple(bytes.fromhex(string))
+        if len(components) == 3:
+            components += (255,)
         c = Color(*components)
         return c
     except:
-        error = "Color must be an hexadecimal number, for example AABBCC"
+        error = "Color must be an hexadecimal number, for example 'AABBCC'"
         raise argparse.ArgumentTypeError(error)
 
 
@@ -991,6 +1015,12 @@ def main():
         action="store_true",
         help="Process every file in the specified directory recursively.",
         dest="recursive")
+    parser.add_argument(
+        "--capture-alpha",
+        type=int,
+        default=DEFAULT_CAPTURE_ALPHA,
+        help="Alpha channel value for the captures (transparency in range [0, 255]). Defaults to 255 (opaque)",
+        dest="capture_alpha")
 
     args = parser.parse_args()
 
@@ -1083,7 +1113,8 @@ def process_file(path, args):
         timestamp_font_color=args.timestamp_font_color,
         timestamp_background_color=args.timestamp_background_color,
         template_path=args.metadata_template_path,
-        header_margin=args.metadata_margin
+        header_margin=args.metadata_margin,
+        capture_alpha=args.capture_alpha
         )
 
     save_image(image, media_info, output_path)
