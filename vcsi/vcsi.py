@@ -401,7 +401,11 @@ class MediaCapture():
         return m
 
 
-def grid_desired_size(grid, media_info, width=DEFAULT_CONTACT_SHEET_WIDTH, horizontal_margin=DEFAULT_GRID_HORIZONTAL_SPACING):
+def grid_desired_size(
+        grid,
+        media_info,
+        width=DEFAULT_CONTACT_SHEET_WIDTH,
+        horizontal_margin=DEFAULT_GRID_HORIZONTAL_SPACING):
     """Computes the size of the images placed on a mxn grid with given fixed width.
     Returns (width, height)
     """
@@ -430,7 +434,10 @@ def timestamp_generator(media_info, start_delay_percent, end_delay_percent, num_
         time += capture_interval
 
 
-def select_sharpest_images(media_info, media_capture, args,
+def select_sharpest_images(
+        media_info,
+        media_capture,
+        args,
         num_groups=5):
     """Make `num_samples` captures and select `num_selected` captures out of these
     based on blurriness and color variety.
@@ -450,10 +457,17 @@ def select_sharpest_images(media_info, media_capture, args,
         args.num_samples = args.num_selected
         num_groups = args.num_selected
 
-    desired_size = grid_desired_size(args.grid, media_info, width=args.vcs_width, horizontal_margin=args.grid_horizontal_spacing)
+    desired_size = grid_desired_size(
+        args.grid,
+        media_info,
+        width=args.vcs_width,
+        horizontal_margin=args.grid_horizontal_spacing)
     blurs = []
     if args.manual_timestamps is None:
-        timestamps = timestamp_generator(media_info, args.start_delay_percent, args.end_delay_percent, args.num_samples)
+        timestamps = timestamp_generator(media_info,
+                                         args.start_delay_percent,
+                                         args.end_delay_percent,
+                                         args.num_samples)
     else:
         timestamps = [(MediaInfo.pretty_to_seconds(x), x) for x in args.manual_timestamps]
 
@@ -578,7 +592,6 @@ def max_line_length(
     if text is None:
         text = media_info.filename
 
-    metadata_font_dimensions = metadata_font.getsize(text)
     max_width = width - 2 * header_margin
 
     max_length = 0
@@ -615,7 +628,12 @@ def prepare_metadata_text_lines(media_info, header_font, header_margin, width, t
     for line in template_lines:
         remaining_chars = line
         while len(remaining_chars) > 0:
-            max_metadata_line_length = max_line_length(media_info, header_font, header_margin, width=width, text=remaining_chars)
+            max_metadata_line_length = max_line_length(
+                media_info,
+                header_font,
+                header_margin,
+                width=width,
+                text=remaining_chars)
             wraps = textwrap.wrap(remaining_chars, max_metadata_line_length)
             header_lines.append(wraps[0])
             remaining_chars = remaining_chars[len(wraps[0]):].strip()
@@ -623,19 +641,31 @@ def prepare_metadata_text_lines(media_info, header_font, header_margin, width, t
     return header_lines
 
 
-def compose_contact_sheet(media_info, frames, args,
+def compose_contact_sheet(
+        media_info,
+        frames,
+        args,
         timestamp_horizontal_spacing=5,
         timestamp_vertical_spacing=5):
     """Creates a video contact sheet with the media information in a header
     and the selected frames arranged on a mxn grid with optional timestamps
     """
-    desired_size = grid_desired_size(args.grid, media_info, width=args.vcs_width, horizontal_margin=args.grid_horizontal_spacing)
+    desired_size = grid_desired_size(
+        args.grid,
+        media_info,
+        width=args.vcs_width,
+        horizontal_margin=args.grid_horizontal_spacing)
     height = args.grid.y * (desired_size[1] + args.grid_vertical_spacing) - args.grid_vertical_spacing
 
     header_font = ImageFont.truetype(args.metadata_font, args.metadata_font_size)
     timestamp_font = ImageFont.truetype(args.timestamp_font, args.timestamp_font_size)
 
-    header_lines = prepare_metadata_text_lines(media_info, header_font, args.metadata_margin, args.vcs_width, template_path=args.metadata_template_path)
+    header_lines = prepare_metadata_text_lines(
+        media_info,
+        header_font,
+        args.metadata_margin,
+        args.vcs_width,
+        template_path=args.metadata_template_path)
 
     line_spacing_coefficient = 1.2
     header_line_height = int(args.metadata_font_size * line_spacing_coefficient)
@@ -654,8 +684,6 @@ def compose_contact_sheet(media_info, frames, args,
     image_timestamp_layer = Image.new("RGBA", (final_image_width, final_image_height), transparent)
     image_timestamp_text_layer = Image.new("RGBA", (final_image_width, final_image_height), transparent)
 
-    draw = ImageDraw.Draw(image)
-    draw_capture_layer = ImageDraw.Draw(image_capture_layer)
     draw_header_text_layer = ImageDraw.Draw(image_header_text_layer)
     draw_timestamp_layer = ImageDraw.Draw(image_timestamp_layer)
     draw_timestamp_text_layer = ImageDraw.Draw(image_timestamp_text_layer)
@@ -791,7 +819,8 @@ def metadata_position_type(string):
 
 def hex_color_type(string):
     """Type parser for argparse. Argument must be an hexadecimal number representing a color.
-    For example 'AABBCC' (RGB) or 'AABBCCFF' (RGBA). An exception will be raised if the argument is not of that form.
+    For example 'AABBCC' (RGB) or 'AABBCCFF' (RGBA). An exception will be raised if the argument
+    is not of that form.
     """
     try:
         components = tuple(bytes.fromhex(string))
@@ -1021,11 +1050,16 @@ def process_file(path, args):
     """Generate a video contact sheet for the file at given path
     """
     print("Processing %s..." % (path))
-    
+
     output_path = args.output_path
 
-    media_info = MediaInfo(path, verbose=args.is_verbose)
-    media_capture = MediaCapture(path, accurate=args.is_accurate, skip_delay_seconds=args.accurate_delay_seconds)
+    media_info = MediaInfo(
+        path,
+        verbose=args.is_verbose)
+    media_capture = MediaCapture(
+        path,
+        accurate=args.is_accurate,
+        skip_delay_seconds=args.accurate_delay_seconds)
 
     if args.grid:
         args.num_selected = args.grid[0] * args.grid[1]
