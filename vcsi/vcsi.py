@@ -997,13 +997,15 @@ def main():
     parser.add_argument(
         "-a", "--accurate",
         action="store_true",
-        help="Make accurate captures. This capture mode is way slower than default but helps when capturing frames from HEVC videos.",
+        help="""Make accurate captures. This capture mode is way slower than the default one
+        but it helps when capturing frames from HEVC videos.""",
         dest="is_accurate")
     parser.add_argument(
         "-A", "--accurate-delay-seconds",
         type=int,
         default=DEFAULT_ACCURATE_DELAY_SECONDS,
-        help="Fast skip to N seconds before capture time, then do accurate capture (decodes N seconds of video before each capture). This is used with accurate caputre mode only.",
+        help="""Fast skip to N seconds before capture time, then do accurate capture
+        (decodes N seconds of video before each capture). This is used with accurate caputre mode only.""",
         dest="accurate_delay_seconds")
     parser.add_argument(
         "--metadata-margin",
