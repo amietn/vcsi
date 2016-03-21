@@ -430,45 +430,35 @@ def timestamp_generator(media_info, start_delay_percent, end_delay_percent, num_
         time += capture_interval
 
 
-def select_sharpest_images(
-        media_info,
-        media_capture,
-        num_samples=30,
-        num_groups=5,
-        num_selected=3,
-        start_delay_percent=7,
-        end_delay_percent=7,
-        width=DEFAULT_CONTACT_SHEET_WIDTH,
-        grid=None,
-        grid_horizontal_spacing=DEFAULT_GRID_HORIZONTAL_SPACING,
-        manual_timestamps=None):
+def select_sharpest_images(media_info, media_capture, args,
+        num_groups=5):
     """Make `num_samples` captures and select `num_selected` captures out of these
     based on blurriness and color variety.
     """
     if num_groups is None:
-        num_groups = num_selected
+        num_groups = args.num_selected
 
     # make sure num_selected is not too large
-    if num_selected > num_groups:
-        num_groups = num_selected
+    if args.num_selected > num_groups:
+        num_groups = args.num_selected
 
-    if num_selected > num_samples:
-        num_samples = num_selected
+    if args.num_selected > args.num_samples:
+        args.num_samples = args.num_selected
 
     # make sure num_samples is large enough
-    if num_samples < num_selected or num_samples < num_groups:
-        num_samples = num_selected
-        num_groups = num_selected
+    if args.num_samples < args.num_selected or args.num_samples < num_groups:
+        args.num_samples = args.num_selected
+        num_groups = args.num_selected
 
-    desired_size = grid_desired_size(grid, media_info, width=width, horizontal_margin=grid_horizontal_spacing)
+    desired_size = grid_desired_size(args.grid, media_info, width=args.vcs_width, horizontal_margin=args.grid_horizontal_spacing)
     blurs = []
-    if manual_timestamps is None:
-        timestamps = timestamp_generator(media_info, start_delay_percent, end_delay_percent, num_samples)
+    if args.manual_timestamps is None:
+        timestamps = timestamp_generator(media_info, args.start_delay_percent, args.end_delay_percent, args.num_samples)
     else:
-        timestamps = [(MediaInfo.pretty_to_seconds(x), x) for x in manual_timestamps]
+        timestamps = [(MediaInfo.pretty_to_seconds(x), x) for x in args.manual_timestamps]
 
     for i, timestamp in enumerate(timestamps):
-        status = "Sampling... %s/%s" % ((i+1), num_samples)
+        status = "Sampling... %s/%s" % ((i+1), args.num_samples)
         print(status, end="\r")
 
         filename = tempfile.mkstemp(suffix=".png")[1]
@@ -502,7 +492,7 @@ def select_sharpest_images(
     else:
         selected_items = time_sorted
 
-    selected_items = select_color_variety(selected_items, num_selected)
+    selected_items = select_color_variety(selected_items, args.num_selected)
 
     return selected_items, time_sorted
 
@@ -633,51 +623,32 @@ def prepare_metadata_text_lines(media_info, header_font, header_margin, width, t
     return header_lines
 
 
-def compose_contact_sheet(
-        media_info,
-        frames,
-        width=DEFAULT_CONTACT_SHEET_WIDTH,
-        show_timestamp=False,
-        grid=None,
-        metadata_font=DEFAULT_METADATA_FONT,
-        metadata_font_size=DEFAULT_METADATA_FONT_SIZE,
-        timestamp_font=DEFAULT_TIMESTAMP_FONT,
-        timestamp_font_size=DEFAULT_TIMESTAMP_FONT_SIZE,
-        grid_horizontal_spacing=DEFAULT_GRID_HORIZONTAL_SPACING,
-        grid_vertical_spacing=DEFAULT_GRID_VERTICAL_SPACING,
-        metadata_position=DEFAULT_METADATA_POSITION,
-        background_color=DEFAULT_BACKGROUND_COLOR,
-        metadata_font_color=DEFAULT_METADATA_FONT_COLOR,
-        timestamp_font_color=DEFAULT_TIMESTAMP_FONT_COLOR,
-        timestamp_background_color=DEFAULT_TIMESTAMP_BACKGROUND_COLOR,
+def compose_contact_sheet(media_info, frames, args,
         timestamp_horizontal_spacing=5,
-        timestamp_vertical_spacing=5,
-        header_margin=DEFAULT_METADATA_MARGIN,
-        template_path=None,
-        capture_alpha=DEFAULT_CAPTURE_ALPHA):
+        timestamp_vertical_spacing=5):
     """Creates a video contact sheet with the media information in a header
     and the selected frames arranged on a mxn grid with optional timestamps
     """
-    desired_size = grid_desired_size(grid, media_info, width=width, horizontal_margin=grid_horizontal_spacing)
-    height = grid.y * (desired_size[1] + grid_vertical_spacing) - grid_vertical_spacing
+    desired_size = grid_desired_size(args.grid, media_info, width=args.vcs_width, horizontal_margin=args.grid_horizontal_spacing)
+    height = args.grid.y * (desired_size[1] + args.grid_vertical_spacing) - args.grid_vertical_spacing
 
-    header_font = ImageFont.truetype(metadata_font, metadata_font_size)
-    timestamp_font = ImageFont.truetype(timestamp_font, timestamp_font_size)
+    header_font = ImageFont.truetype(args.metadata_font, args.metadata_font_size)
+    timestamp_font = ImageFont.truetype(args.timestamp_font, args.timestamp_font_size)
 
-    header_lines = prepare_metadata_text_lines(media_info, header_font, header_margin, width, template_path=template_path)
+    header_lines = prepare_metadata_text_lines(media_info, header_font, args.metadata_margin, args.vcs_width, template_path=args.metadata_template_path)
 
     line_spacing_coefficient = 1.2
-    header_line_height = int(metadata_font_size * line_spacing_coefficient)
-    header_height = 2 * header_margin + len(header_lines) * header_line_height
+    header_line_height = int(args.metadata_font_size * line_spacing_coefficient)
+    header_height = 2 * args.metadata_margin + len(header_lines) * header_line_height
 
-    if metadata_position == "hidden":
+    if args.metadata_position == "hidden":
         header_height = 0
 
-    final_image_width = width
+    final_image_width = args.vcs_width
     final_image_height = height + header_height
     transparent = (255, 255, 255, 0)
 
-    image = Image.new("RGBA", (final_image_width, final_image_height), background_color)
+    image = Image.new("RGBA", (final_image_width, final_image_height), args.background_color)
     image_capture_layer = Image.new("RGBA", (final_image_width, final_image_height), transparent)
     image_header_text_layer = Image.new("RGBA", (final_image_width, final_image_height), transparent)
     image_timestamp_layer = Image.new("RGBA", (final_image_width, final_image_height), transparent)
@@ -695,15 +666,15 @@ def compose_contact_sheet(
         """
         return draw_metadata(
             draw_header_text_layer,
-            header_margin=header_margin,
+            header_margin=args.metadata_margin,
             header_line_height=header_line_height,
             header_lines=header_lines,
             header_font=header_font,
-            header_font_color=metadata_font_color,
+            header_font_color=args.metadata_font_color,
             start_height=h)
 
     # draw metadata
-    if metadata_position == "top":
+    if args.metadata_position == "top":
         h = draw_metadata_helper()
 
     # draw capture grid
@@ -711,14 +682,14 @@ def compose_contact_sheet(
     frames = sorted(frames, key=lambda x: x.timestamp)
     for i, frame in enumerate(frames):
         f = Image.open(frame.filename)
-        f.putalpha(capture_alpha)
+        f.putalpha(args.capture_alpha)
         image_capture_layer.paste(f, (w, h))
 
         # update x position early for timestamp
-        w += desired_size[0] + grid_horizontal_spacing
+        w += desired_size[0] + args.grid_horizontal_spacing
 
         # show timestamp
-        if show_timestamp:
+        if args.show_timestamp:
             pretty_timestamp = MediaInfo.pretty_duration(frame.timestamp, show_centis=True)
             text_size = timestamp_font.getsize(pretty_timestamp)
 
@@ -726,7 +697,7 @@ def compose_contact_sheet(
             rectangle_hmargin = 3
             rectangle_vmargin = 1
             upper_left = (
-                w - text_size[0] - 2 * rectangle_hmargin - grid_horizontal_spacing - timestamp_horizontal_spacing,
+                w - text_size[0] - 2 * rectangle_hmargin - args.grid_horizontal_spacing - timestamp_horizontal_spacing,
                 h + desired_size[1] - text_size[1] - 2 * rectangle_vmargin - timestamp_vertical_spacing
                 )
             bottom_right = (
@@ -735,7 +706,7 @@ def compose_contact_sheet(
                 )
             draw_timestamp_layer.rectangle(
                 [upper_left, bottom_right],
-                fill=timestamp_background_color
+                fill=args.timestamp_background_color
                 )
 
             # draw timestamp
@@ -746,20 +717,20 @@ def compose_contact_sheet(
                 ),
                 pretty_timestamp,
                 font=timestamp_font,
-                fill=timestamp_font_color
+                fill=args.timestamp_font_color
                 )
 
         # update y position
-        if (i+1) % grid.x == 0:
-            h += desired_size[1] + grid_vertical_spacing
+        if (i+1) % args.grid.x == 0:
+            h += desired_size[1] + args.grid_vertical_spacing
 
         # update x position
-        if (i+1) % grid.x == 0:
+        if (i+1) % args.grid.x == 0:
             w = 0
 
     # draw metadata
-    if metadata_position == "bottom":
-        h -= grid_vertical_spacing
+    if args.metadata_position == "bottom":
+        h -= args.grid_vertical_spacing
         h = draw_metadata_helper()
 
     # alpha blend
@@ -864,7 +835,7 @@ def main():
     parser.add_argument(
         "-n", "--num-frames",
         help="capture n frames",
-        dest="num_frames",
+        dest="num_selected",
         type=int,
         default=3)
     parser.add_argument(
@@ -912,7 +883,7 @@ def main():
     parser.add_argument(
         "-g", "--grid",
         help="display frames on a mxn grid (for example 4x5)",
-        dest="mxn",
+        dest="grid",
         type=mxn_type,
         default=None)
     parser.add_argument(
@@ -1056,12 +1027,10 @@ def process_file(path, args):
     media_info = MediaInfo(path, verbose=args.is_verbose)
     media_capture = MediaCapture(path, accurate=args.is_accurate, skip_delay_seconds=args.accurate_delay_seconds)
 
-    num_selected = args.num_frames
-
-    if args.mxn:
-        num_selected = args.mxn[0] * args.mxn[1]
+    if args.grid:
+        args.num_selected = args.grid[0] * args.grid[1]
     else:
-        args.mxn = mxn_type("%sx%s" % (1, num_selected))
+        args.grid = mxn_type("%sx%s" % (1, args.num_selected))
 
     if args.delay_percent is not None:
         args.start_delay_percent = args.delay_percent
@@ -1074,53 +1043,18 @@ def process_file(path, args):
     # manual frame selection
     if args.manual_timestamps is not None:
         mframes_size = len(args.manual_timestamps)
-        print(mframes_size)
-        grid_size = args.mxn.x * args.mxn.y
+        grid_size = args.grid.x * args.grid.y
 
-        args.num_frames = mframes_size
-        num_selected = mframes_size
+        args.num_selected = mframes_size
         args.num_samples = mframes_size
 
         if not mframes_size == grid_size:
-            args.mxn = Grid(1, mframes_size)
+            args.grid = Grid(1, mframes_size)
 
-        print(args.manual_timestamps)
-
-    selected_frames, temp_frames = select_sharpest_images(
-        media_info,
-        media_capture,
-        num_selected=num_selected,
-        num_samples=args.num_samples,
-        width=args.vcs_width,
-        grid=args.mxn,
-        start_delay_percent=args.start_delay_percent,
-        end_delay_percent=args.end_delay_percent,
-        grid_horizontal_spacing=args.grid_horizontal_spacing,
-        manual_timestamps=args.manual_timestamps
-        )
+    selected_frames, temp_frames = select_sharpest_images(media_info, media_capture, args)
 
     print("Composing contact sheet...")
-    image = compose_contact_sheet(
-        media_info,
-        selected_frames,
-        width=args.vcs_width,
-        show_timestamp=args.show_timestamp,
-        grid=args.mxn,
-        metadata_font=args.metadata_font,
-        metadata_font_size=args.metadata_font_size,
-        timestamp_font=args.timestamp_font,
-        timestamp_font_size=args.timestamp_font_size,
-        grid_horizontal_spacing=args.grid_horizontal_spacing,
-        grid_vertical_spacing=args.grid_vertical_spacing,
-        metadata_position=args.metadata_position,
-        background_color=args.background_color,
-        metadata_font_color=args.metadata_font_color,
-        timestamp_font_color=args.timestamp_font_color,
-        timestamp_background_color=args.timestamp_background_color,
-        template_path=args.metadata_template_path,
-        header_margin=args.metadata_margin,
-        capture_alpha=args.capture_alpha
-        )
+    image = compose_contact_sheet(media_info, selected_frames, args)
 
     save_image(image, media_info, output_path)
 
