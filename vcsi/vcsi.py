@@ -920,7 +920,7 @@ def main():
         help="number of samples",
         dest="num_samples",
         type=int,
-        default=50)
+        default=None)
     parser.add_argument(
         "-t", "--show-timestamp",
         action="store_true",
@@ -1067,6 +1067,9 @@ def process_file(path, args):
         args.num_selected = args.grid[0] * args.grid[1]
     else:
         args.grid = mxn_type("%sx%s" % (1, args.num_selected))
+
+    if args.num_samples is None:
+        args.num_samples = args.num_selected
 
     if args.delay_percent is not None:
         args.start_delay_percent = args.delay_percent
