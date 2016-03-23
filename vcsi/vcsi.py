@@ -3,11 +3,17 @@
 """Create a video contact sheet.
 """
 
+from __future__ import print_function
+
 import subprocess
+import os
+try:
+    from subprocess import DEVNULL
+except ImportError:
+        DEVNULL = open(os.devnull, 'wb')
 import argparse
 import json
 import math
-import os
 import tempfile
 import textwrap
 from collections import namedtuple
@@ -149,6 +155,7 @@ class MediaInfo():
         self.size_bytes = int(format_dict["size"])
         self.size = self.human_readable_size(self.size_bytes)
 
+    @staticmethod
     def pretty_to_seconds(
             pretty_duration):
         """Converts pretty printed timestamp to seconds
@@ -174,13 +181,15 @@ class MediaInfo():
         result = (millis/1000.0) + seconds + minutes * 60 + hours * 3600
         return result
 
+
+    @staticmethod
     def pretty_duration(
             seconds,
             show_centis=False,
             show_millis=False):
         """Converts seconds to a human readable time format
         """
-        hours = math.floor(seconds / 3600)
+        hours = int(math.floor(seconds / 3600))
         remaining_seconds = seconds - 3600 * hours
 
         minutes = math.floor(remaining_seconds / 60)
@@ -189,15 +198,15 @@ class MediaInfo():
         duration = ""
 
         if hours > 0:
-            duration += "%s:" % (hours,)
+            duration += "%s:" % (int(hours),)
 
-        duration += "%s:%s" % (str(minutes).zfill(2), str(math.floor(remaining_seconds)).zfill(2))
+        duration += "%s:%s" % (str(int(minutes)).zfill(2), str(int(math.floor(remaining_seconds))).zfill(2))
 
         if show_centis or show_millis:
             coeff = 1000 if show_millis else 100
             digits = 3 if show_millis else 2
             centis = math.floor((remaining_seconds - math.floor(remaining_seconds)) * coeff)
-            duration += ".%s" % (str(centis).zfill(digits))
+            duration += ".%s" % (str(int(centis)).zfill(digits))
 
         return duration
 
@@ -205,7 +214,7 @@ class MediaInfo():
         """Computes the height based on a given width and fixed aspect ratio.
         Returns (width, height)
         """
-        ratio = width / self.display_width
+        ratio = width / float(self.display_width)
         desired_height = math.floor(self.display_height * ratio)
         return (int(width), int(desired_height))
 
@@ -343,7 +352,8 @@ class MediaCapture():
                     out_path
                 ]
 
-        subprocess.call(ffmpeg_command, stderr=subprocess.DEVNULL, stdout=subprocess.DEVNULL)
+        print(" ".join(ffmpeg_command))
+        subprocess.call(ffmpeg_command, stderr=DEVNULL, stdout=DEVNULL)
 
     def compute_avg_color(self, image_path):
         """Computes the average color of an image
@@ -384,7 +394,7 @@ class MediaCapture():
         """
         xs = matrix.flatten()
         srt = sorted(xs, reverse=True)
-        length = math.floor(percentage * len(srt))
+        length = int(math.floor(percentage * len(srt)))
 
         matrix_subset = srt[:length]
         return numpy.median(matrix_subset)
@@ -498,7 +508,7 @@ def select_sharpest_images(
 
     # group into num_selected groups
     if num_groups > 1:
-        group_size = math.floor(len(time_sorted)/num_groups)
+        group_size = int(math.floor(len(time_sorted)/num_groups))
         groups = chunks(time_sorted, group_size)
 
         # find top sharpest for each group
@@ -823,7 +833,7 @@ def hex_color_type(string):
     is not of that form.
     """
     try:
-        components = tuple(bytes.fromhex(string))
+        components = tuple(bytearray.fromhex(string))
         if len(components) == 3:
             components += (255,)
         c = Color(*components)
