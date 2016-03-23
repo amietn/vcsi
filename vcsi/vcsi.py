@@ -10,7 +10,7 @@ import os
 try:
     from subprocess import DEVNULL
 except ImportError:
-        DEVNULL = open(os.devnull, 'wb')
+    DEVNULL = open(os.devnull, 'wb')
 import argparse
 import json
 import math
@@ -25,12 +25,15 @@ from jinja2 import Template
 __version__ = "5"
 __author__ = "Nils Amiet"
 
+Grid = namedtuple('Grid', ['x', 'y'])
+Frame = namedtuple('Frame', ['filename', 'blurriness', 'timestamp', 'avg_color'])
+Color = namedtuple('Color', ['r', 'g', 'b', 'a'])
 
-DEFAULT_METADATA_FONT_SIZE = 12
-DEFAULT_METADATA_FONT = "/usr/share/fonts/TTF/LiberationSans-Regular.ttf"
+DEFAULT_METADATA_FONT_SIZE = 10
+DEFAULT_METADATA_FONT = "/usr/share/fonts/TTF/DejaVuSans-Bold.ttf"
 DEFAULT_TIMESTAMP_FONT_SIZE = 10
 DEFAULT_TIMESTAMP_FONT = "/usr/share/fonts/TTF/DejaVuSans.ttf"
-DEFAULT_CONTACT_SHEET_WIDTH = 600
+DEFAULT_CONTACT_SHEET_WIDTH = 1500
 DEFAULT_DELAY_PERCENT = None
 DEFAULT_START_DELAY_PERCENT = 7
 DEFAULT_END_DELAY_PERCENT = DEFAULT_START_DELAY_PERCENT
@@ -38,17 +41,14 @@ DEFAULT_GRID_SPACING = None
 DEFAULT_GRID_HORIZONTAL_SPACING = 5
 DEFAULT_GRID_VERTICAL_SPACING = DEFAULT_GRID_HORIZONTAL_SPACING
 DEFAULT_METADATA_POSITION = "top"
-DEFAULT_METADATA_FONT_COLOR = "000000FF"
-DEFAULT_BACKGROUND_COLOR = "FFFFFFFF"
-DEFAULT_TIMESTAMP_FONT_COLOR = "FFFFFFFF"
-DEFAULT_TIMESTAMP_BACKGROUND_COLOR = "282828FF"
+DEFAULT_METADATA_FONT_COLOR = "ffffff"
+DEFAULT_BACKGROUND_COLOR = "000000"
+DEFAULT_TIMESTAMP_FONT_COLOR = "ffffff"
+DEFAULT_TIMESTAMP_BACKGROUND_COLOR = "000000aa"
 DEFAULT_ACCURATE_DELAY_SECONDS = 1
 DEFAULT_METADATA_MARGIN = 10
 DEFAULT_CAPTURE_ALPHA = 255
-
-Grid = namedtuple('Grid', ['x', 'y'])
-Frame = namedtuple('Frame', ['filename', 'blurriness', 'timestamp', 'avg_color'])
-Color = namedtuple('Color', ['r', 'g', 'b', 'a'])
+DEFAULT_GRID_SIZE = Grid(4, 4)
 
 
 class MediaInfo(object):
@@ -180,7 +180,6 @@ class MediaInfo(object):
 
         result = (millis/1000.0) + seconds + minutes * 60 + hours * 3600
         return result
-
 
     @staticmethod
     def pretty_duration(
@@ -871,12 +870,6 @@ def main():
         help="save to output file",
         dest="output_path")
     parser.add_argument(
-        "-n", "--num-frames",
-        help="capture n frames",
-        dest="num_selected",
-        type=int,
-        default=3)
-    parser.add_argument(
         "--start-delay-percent",
         help="do not capture frames in the first n percent of total time",
         dest="start_delay_percent",
@@ -923,7 +916,7 @@ def main():
         help="display frames on a mxn grid (for example 4x5)",
         dest="grid",
         type=mxn_type,
-        default=None)
+        default=DEFAULT_GRID_SIZE)
     parser.add_argument(
         "-s", "--num-samples",
         help="number of samples",
@@ -1072,10 +1065,7 @@ def process_file(path, args):
         accurate=args.is_accurate,
         skip_delay_seconds=args.accurate_delay_seconds)
 
-    if args.grid:
-        args.num_selected = args.grid[0] * args.grid[1]
-    else:
-        args.grid = mxn_type("%sx%s" % (1, args.num_selected))
+    args.num_selected = args.grid.x * args.grid.y
 
     if args.num_samples is None:
         args.num_samples = args.num_selected
