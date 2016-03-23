@@ -14,7 +14,7 @@ FFPROBE_EXAMPLE_JSON_PATH = "tests/data/bbb_ffprobe.json"
 class MediaInfoForTest(MediaInfo):
 
     def __init__(self, json_path):
-        super().__init__(json_path)
+        super(MediaInfoForTest, self).__init__(json_path)
 
     def probe_media(self, path):
         with open(path) as f:

@@ -51,7 +51,7 @@ Frame = namedtuple('Frame', ['filename', 'blurriness', 'timestamp', 'avg_color']
 Color = namedtuple('Color', ['r', 'g', 'b', 'a'])
 
 
-class MediaInfo():
+class MediaInfo(object):
     """Collect information about a video file
     """
 
@@ -301,7 +301,7 @@ class MediaInfo():
         return attributes
 
 
-class MediaCapture():
+class MediaCapture(object):
     """Capture frames of a video
     """
 
