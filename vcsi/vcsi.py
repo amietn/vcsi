@@ -352,7 +352,6 @@ class MediaCapture():
                     out_path
                 ]
 
-        print(" ".join(ffmpeg_command))
         subprocess.call(ffmpeg_command, stderr=DEVNULL, stdout=DEVNULL)
 
     def compute_avg_color(self, image_path):
