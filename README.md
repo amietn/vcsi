@@ -56,6 +56,7 @@ Python modules:
 * numpy
 * pillow
 * jinja2
+* texttable
 
 
 Must be in your PATH:
