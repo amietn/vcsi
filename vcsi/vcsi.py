@@ -7,6 +7,7 @@ from __future__ import print_function
 
 import subprocess
 import os
+import sys
 try:
     from subprocess import DEVNULL
 except ImportError:
@@ -21,6 +22,7 @@ from collections import namedtuple
 from PIL import Image, ImageDraw, ImageFont
 import numpy
 from jinja2 import Template
+import texttable
 
 __version__ = "5"
 __author__ = "Nils Amiet"
@@ -278,26 +280,33 @@ class MediaInfo(object):
             self.audio_bit_rate = None
 
     def template_attributes(self):
-        attributes = {
-            "size": self.size,
-            "size_bytes": self.size_bytes,
-            "filename": self.filename,
-            "duration": self.duration,
-            "sample_width": self.sample_width,
-            "sample_height": self.sample_height,
-            "display_width": self.display_width,
-            "display_height": self.display_height,
-            "video_codec": self.video_codec,
-            "video_codec_long": self.video_codec_long,
-            "display_aspect_ratio": self.display_aspect_ratio,
-            "sample_aspect_ratio": self.sample_aspect_ratio,
-            "audio_codec": self.audio_codec,
-            "audio_codec_long": self.audio_codec_long,
-            "audio_sample_rate": self.audio_sample_rate,
-            "audio_bit_rate": self.audio_bit_rate,
-            "frame_rate": self.frame_rate
-        }
-        return attributes
+        """Returns the template attributes and values ready for use in the metadata header
+        """
+        return {x["name"]: getattr(self, x["name"]) for x in MediaInfo.list_template_attributes()}
+
+    @staticmethod
+    def list_template_attributes():
+        """Returns a list a of all supported template attributes with their description and example
+        """
+        table = []
+        table.append({"name": "size", "description": "File size (pretty format)", "example": "128.3 MiB"})
+        table.append({"name": "size_bytes", "description": "File size (bytes)", "example": "4662788373"})
+        table.append({"name": "filename", "description": "File name", "example": "video.mkv"})
+        table.append({"name": "duration", "description": "Duration (pretty format)", "example": "03:07"})
+        table.append({"name": "sample_width", "description": "Sample width (pixels)", "example": "1920"})
+        table.append({"name": "sample_height", "description": "Sample height (pixels)", "example": "1080"})
+        table.append({"name": "display_width", "description": "Display width (pixels)", "example": "1920"})
+        table.append({"name": "display_height", "description": "Display height (pixels)", "example": "1080"})
+        table.append({"name": "video_codec", "description": "Video codec", "example": "h264"})
+        table.append({"name": "video_codec_long", "description": "Video codec (long name)", "example": "H.264 / AVC / MPEG-4 AVC / MPEG-4 part 10"})
+        table.append({"name": "display_aspect_ratio", "description": "Display aspect ratio", "example": "16:9"})
+        table.append({"name": "sample_aspect_ratio", "description": "Sample aspect ratio", "example": "1:1"})
+        table.append({"name": "audio_codec", "description": "Audio codec", "example": "aac"})
+        table.append({"name": "audio_codec_long", "description": "Audio codec (long name)", "example": "AAC (Advanced Audio Coding)"})
+        table.append({"name": "audio_sample_rate", "description": "Audio sample rate (Hz)", "example": "44100"})
+        table.append({"name": "audio_bit_rate", "description": "Audio bit rate (bits/s)", "example": "192000"})
+        table.append({"name": "frame_rate", "description": "Frame rate (frames/s)", "example": "23.974"})
+        return table
 
 
 class MediaCapture(object):
@@ -797,6 +806,19 @@ def cleanup(frames):
             pass
 
 
+def print_template_attributes():
+    """Display all the available template attributes in a tabular format
+    """
+    table = MediaInfo.list_template_attributes()
+
+    tab = texttable.Texttable()
+    tab.set_cols_dtype(["t", "t", "t"])
+    rows = [[x["name"], x["description"], x["example"]] for x in table]
+    tab.add_rows(rows, header=False)
+    tab.header(["Attribute name", "Description", "Example"])
+    print(tab.draw())
+
+
 def mxn_type(string):
     """Type parser for argparse. Argument of type "mxn" will be converted to Grid(m, n).
     An exception will be thrown if the argument is not of the required form
@@ -1030,8 +1052,16 @@ def main():
         "--version",
         action="version",
         version="%(prog)s version {version}".format(version=__version__))
+    parser.add_argument(
+        "--list-template-attributes",
+        action="store_true",
+        dest="list_template_attributes")
 
     args = parser.parse_args()
+
+    if args.list_template_attributes:
+        print_template_attributes()
+        sys.exit(0)
 
     if args.recursive:
         for path in args.filenames:
