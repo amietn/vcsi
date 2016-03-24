@@ -282,7 +282,7 @@ class MediaInfo(object):
     def template_attributes(self):
         """Returns the template attributes and values ready for use in the metadata header
         """
-        return {x["name"]: getattr(self, x["name"]) for x in MediaInfo.list_template_attributes()}
+        return dict((x["name"], getattr(self, x["name"])) for x in MediaInfo.list_template_attributes())
 
     @staticmethod
     def list_template_attributes():
