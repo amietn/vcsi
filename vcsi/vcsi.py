@@ -1029,7 +1029,7 @@ def main():
         type=int,
         default=DEFAULT_ACCURATE_DELAY_SECONDS,
         help="""Fast skip to N seconds before capture time, then do accurate capture
-        (decodes N seconds of video before each capture). This is used with accurate caputre mode only.""",
+        (decodes N seconds of video before each capture). This is used with accurate capture mode only.""",
         dest="accurate_delay_seconds")
     parser.add_argument(
         "--metadata-margin",
