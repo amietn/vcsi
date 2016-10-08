@@ -6,3 +6,5 @@
 /coverage.xml
 __pycache__
 /cover
+*.pyc
+/.idea
