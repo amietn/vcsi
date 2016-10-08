@@ -5,9 +5,10 @@
 
 from __future__ import print_function
 
-import subprocess
 import os
+import subprocess
 import sys
+
 try:
     from subprocess import DEVNULL
 except ImportError:
@@ -180,7 +181,7 @@ class MediaInfo(object):
             minutes = int(left_split[1])
             seconds = int(left_split[2])
 
-        result = (millis/1000.0) + seconds + minutes * 60 + hours * 3600
+        result = (millis / 1000.0) + seconds + minutes * 60 + hours * 3600
         return result
 
     @staticmethod
@@ -298,11 +299,13 @@ class MediaInfo(object):
         table.append({"name": "display_width", "description": "Display width (pixels)", "example": "1920"})
         table.append({"name": "display_height", "description": "Display height (pixels)", "example": "1080"})
         table.append({"name": "video_codec", "description": "Video codec", "example": "h264"})
-        table.append({"name": "video_codec_long", "description": "Video codec (long name)", "example": "H.264 / AVC / MPEG-4 AVC / MPEG-4 part 10"})
+        table.append({"name": "video_codec_long", "description": "Video codec (long name)",
+                      "example": "H.264 / AVC / MPEG-4 AVC / MPEG-4 part 10"})
         table.append({"name": "display_aspect_ratio", "description": "Display aspect ratio", "example": "16:9"})
         table.append({"name": "sample_aspect_ratio", "description": "Sample aspect ratio", "example": "1:1"})
         table.append({"name": "audio_codec", "description": "Audio codec", "example": "aac"})
-        table.append({"name": "audio_codec_long", "description": "Audio codec (long name)", "example": "AAC (Advanced Audio Coding)"})
+        table.append({"name": "audio_codec_long", "description": "Audio codec (long name)",
+                      "example": "AAC (Advanced Audio Coding)"})
         table.append({"name": "audio_sample_rate", "description": "Audio sample rate (Hz)", "example": "44100"})
         table.append({"name": "audio_bit_rate", "description": "Audio bit rate (bits/s)", "example": "192000"})
         table.append({"name": "frame_rate", "description": "Frame rate (frames/s)", "example": "23.974"})
@@ -391,7 +394,7 @@ class MediaCapture(object):
         max_freq = self.avg9x(b)
 
         if max_freq is not 0:
-            return 1/max_freq
+            return 1 / max_freq
         else:
             return 1
 
@@ -489,7 +492,7 @@ def select_sharpest_images(
         timestamps = [(MediaInfo.pretty_to_seconds(x), x) for x in args.manual_timestamps]
 
     for i, timestamp in enumerate(timestamps):
-        status = "Sampling... %s/%s" % ((i+1), args.num_samples)
+        status = "Sampling... %s/%s" % ((i + 1), args.num_samples)
         print(status, end="\r")
 
         filename = tempfile.mkstemp(suffix=".png")[1]
@@ -508,14 +511,14 @@ def select_sharpest_images(
                 blurriness=blurriness,
                 timestamp=timestamp[0],
                 avg_color=avg_color
-                )
+            )
         ]
 
     time_sorted = sorted(blurs, key=lambda x: x.timestamp)
 
     # group into num_selected groups
     if num_groups > 1:
-        group_size = int(math.floor(len(time_sorted)/num_groups))
+        group_size = int(math.floor(len(time_sorted) / num_groups))
         groups = chunks(time_sorted, group_size)
 
         # find top sharpest for each group
@@ -573,7 +576,7 @@ def chunks(l, n):
     """ Yield successive n-sized chunks from l.
     """
     for i in range(0, len(l), n):
-        yield l[i:i+n]
+        yield l[i:i + n]
 
 
 def draw_metadata(
@@ -744,15 +747,15 @@ def compose_contact_sheet(
             upper_left = (
                 w - text_size[0] - 2 * rectangle_hmargin - args.grid_horizontal_spacing - timestamp_horizontal_spacing,
                 h + desired_size[1] - text_size[1] - 2 * rectangle_vmargin - timestamp_vertical_spacing
-                )
+            )
             bottom_right = (
                 upper_left[0] + text_size[0] + 2 * rectangle_hmargin,
                 upper_left[1] + text_size[1] + 2 * rectangle_vmargin
-                )
+            )
             draw_timestamp_layer.rectangle(
                 [upper_left, bottom_right],
                 fill=args.timestamp_background_color
-                )
+            )
 
             # draw timestamp
             draw_timestamp_text_layer.text(
@@ -763,14 +766,14 @@ def compose_contact_sheet(
                 pretty_timestamp,
                 font=timestamp_font,
                 fill=args.timestamp_font_color
-                )
+            )
 
         # update y position
-        if (i+1) % args.grid.x == 0:
+        if (i + 1) % args.grid.x == 0:
             h += desired_size[1] + args.grid_vertical_spacing
 
         # update x position
-        if (i+1) % args.grid.x == 0:
+        if (i + 1) % args.grid.x == 0:
             w = 0
 
     # draw metadata
@@ -843,7 +846,7 @@ def metadata_position_type(string):
     if lowercase_position in valid_metadata_positions:
         return lowercase_position
     else:
-        error = 'Metadata header position must be one of %s' % (str(valid_metadata_positions,))
+        error = 'Metadata header position must be one of %s' % (str(valid_metadata_positions, ))
         raise argparse.ArgumentTypeError(error)
 
 
