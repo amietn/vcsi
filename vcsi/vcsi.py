@@ -50,6 +50,8 @@ DEFAULT_TIMESTAMP_FONT_COLOR = "ffffff"
 DEFAULT_TIMESTAMP_BACKGROUND_COLOR = "000000aa"
 DEFAULT_ACCURATE_DELAY_SECONDS = 1
 DEFAULT_METADATA_MARGIN = 10
+DEFAULT_METADATA_HORIZONTAL_MARGIN = DEFAULT_METADATA_MARGIN
+DEFAULT_METADATA_VERTICAL_MARGIN = DEFAULT_METADATA_MARGIN
 DEFAULT_CAPTURE_ALPHA = 255
 DEFAULT_GRID_SIZE = Grid(4, 4)
 
@@ -581,7 +583,7 @@ def chunks(l, n):
 
 def draw_metadata(
         draw,
-        header_margin=None,
+        args,
         header_line_height=None,
         header_lines=None,
         header_font=None,
@@ -590,13 +592,13 @@ def draw_metadata(
     """Draw metadata header
     """
     h = start_height
-    h += header_margin
+    h += args.metadata_vertical_margin
 
     for line in header_lines:
-        draw.text((header_margin, h), line, font=header_font, fill=header_font_color)
+        draw.text((args.metadata_horizontal_margin, h), line, font=header_font, fill=header_font_color)
         h += header_line_height
 
-    h += header_margin
+    h += args.metadata_vertical_margin
 
     return h
 
@@ -683,7 +685,7 @@ def compose_contact_sheet(
     header_lines = prepare_metadata_text_lines(
         media_info,
         header_font,
-        args.metadata_margin,
+        args.metadata_horizontal_margin,
         args.vcs_width,
         template_path=args.metadata_template_path)
 
@@ -714,7 +716,7 @@ def compose_contact_sheet(
         """
         return draw_metadata(
             draw_header_text_layer,
-            header_margin=args.metadata_margin,
+            args,
             header_line_height=header_line_height,
             header_lines=header_lines,
             header_font=header_font,
@@ -1041,6 +1043,18 @@ def main():
         help="Margin (in pixels) in the metadata header.",
         dest="metadata_margin")
     parser.add_argument(
+        "--metadata-horizontal-margin",
+        type=int,
+        default=DEFAULT_METADATA_HORIZONTAL_MARGIN,
+        help="Horizontal margin (in pixels) in the metadata header.",
+        dest="metadata_horizontal_margin")
+    parser.add_argument(
+        "--metadata-vertical-margin",
+        type=int,
+        default=DEFAULT_METADATA_VERTICAL_MARGIN,
+        help="Vertical margin (in pixels) in the metadata header.",
+        dest="metadata_vertical_margin")
+    parser.add_argument(
         "-r", "--recursive",
         action="store_true",
         help="Process every file in the specified directory recursively.",
@@ -1097,6 +1111,11 @@ def process_file(path, args):
         path,
         accurate=args.is_accurate,
         skip_delay_seconds=args.accurate_delay_seconds)
+
+    # metadata margins
+    if not args.metadata_margin == DEFAULT_METADATA_MARGIN:
+        args.metadata_horizontal_margin = args.metadata_margin
+        args.metadata_vertical_margin = args.metadata_margin
 
     args.num_selected = args.grid.x * args.grid.y
 
