@@ -56,6 +56,8 @@ DEFAULT_CAPTURE_ALPHA = 255
 DEFAULT_GRID_SIZE = Grid(4, 4)
 DEFAULT_TIMESTAMP_HORIZONTAL_PADDING = 3
 DEFAULT_TIMESTAMP_VERTICAL_PADDING = 1
+DEFAULT_TIMESTAMP_HORIZONTAL_MARGIN = 5
+DEFAULT_TIMESTAMP_VERTICAL_MARGIN = 5
 
 
 class MediaInfo(object):
@@ -668,9 +670,7 @@ def prepare_metadata_text_lines(media_info, header_font, header_margin, width, t
 def compose_contact_sheet(
         media_info,
         frames,
-        args,
-        timestamp_horizontal_spacing=5,
-        timestamp_vertical_spacing=5):
+        args):
     """Creates a video contact sheet with the media information in a header
     and the selected frames arranged on a mxn grid with optional timestamps
     """
@@ -750,8 +750,8 @@ def compose_contact_sheet(
             rectangle_vpadding = args.timestamp_vertical_padding
 
             upper_left = (
-                w - text_size[0] - 2 * rectangle_hpadding - args.grid_horizontal_spacing - timestamp_horizontal_spacing,
-                h + desired_size[1] - text_size[1] - 2 * rectangle_vpadding - timestamp_vertical_spacing
+                w - text_size[0] - 2 * rectangle_hpadding - args.grid_horizontal_spacing - args.timestamp_horizontal_margin,
+                h + desired_size[1] - text_size[1] - 2 * rectangle_vpadding - args.timestamp_vertical_margin
             )
             bottom_right = (
                 upper_left[0] + text_size[0] + 2 * rectangle_hpadding,
@@ -1069,6 +1069,18 @@ def main():
         default=DEFAULT_TIMESTAMP_VERTICAL_PADDING,
         help="Vertical padding (in pixels) for timestamps.",
         dest="timestamp_vertical_padding")
+    parser.add_argument(
+        "--timestamp-horizontal-margin",
+        type=int,
+        default=DEFAULT_TIMESTAMP_HORIZONTAL_MARGIN,
+        help="Horizontal margin (in pixels) for timestamps.",
+        dest="timestamp_horizontal_margin")
+    parser.add_argument(
+        "--timestamp-vertical-margin",
+        type=int,
+        default=DEFAULT_TIMESTAMP_VERTICAL_MARGIN,
+        help="Vertical margin (in pixels) for timestamps.",
+        dest="timestamp_vertical_margin")
     parser.add_argument(
         "-r", "--recursive",
         action="store_true",
