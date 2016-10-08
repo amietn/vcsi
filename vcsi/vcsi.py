@@ -54,6 +54,8 @@ DEFAULT_METADATA_HORIZONTAL_MARGIN = DEFAULT_METADATA_MARGIN
 DEFAULT_METADATA_VERTICAL_MARGIN = DEFAULT_METADATA_MARGIN
 DEFAULT_CAPTURE_ALPHA = 255
 DEFAULT_GRID_SIZE = Grid(4, 4)
+DEFAULT_TIMESTAMP_HORIZONTAL_PADDING = 3
+DEFAULT_TIMESTAMP_VERTICAL_PADDING = 1
 
 
 class MediaInfo(object):
@@ -744,15 +746,16 @@ def compose_contact_sheet(
             text_size = timestamp_font.getsize(pretty_timestamp)
 
             # draw rectangle
-            rectangle_hmargin = 3
-            rectangle_vmargin = 1
+            rectangle_hpadding = args.timestamp_horizontal_padding
+            rectangle_vpadding = args.timestamp_vertical_padding
+
             upper_left = (
-                w - text_size[0] - 2 * rectangle_hmargin - args.grid_horizontal_spacing - timestamp_horizontal_spacing,
-                h + desired_size[1] - text_size[1] - 2 * rectangle_vmargin - timestamp_vertical_spacing
+                w - text_size[0] - 2 * rectangle_hpadding - args.grid_horizontal_spacing - timestamp_horizontal_spacing,
+                h + desired_size[1] - text_size[1] - 2 * rectangle_vpadding - timestamp_vertical_spacing
             )
             bottom_right = (
-                upper_left[0] + text_size[0] + 2 * rectangle_hmargin,
-                upper_left[1] + text_size[1] + 2 * rectangle_vmargin
+                upper_left[0] + text_size[0] + 2 * rectangle_hpadding,
+                upper_left[1] + text_size[1] + 2 * rectangle_vpadding
             )
             draw_timestamp_layer.rectangle(
                 [upper_left, bottom_right],
@@ -762,8 +765,8 @@ def compose_contact_sheet(
             # draw timestamp
             draw_timestamp_text_layer.text(
                 (
-                    upper_left[0] + rectangle_hmargin,
-                    upper_left[1] + rectangle_vmargin
+                    upper_left[0] + rectangle_hpadding,
+                    upper_left[1] + rectangle_vpadding
                 ),
                 pretty_timestamp,
                 font=timestamp_font,
@@ -1054,6 +1057,18 @@ def main():
         default=DEFAULT_METADATA_VERTICAL_MARGIN,
         help="Vertical margin (in pixels) in the metadata header.",
         dest="metadata_vertical_margin")
+    parser.add_argument(
+        "--timestamp-horizontal-padding",
+        type=int,
+        default=DEFAULT_TIMESTAMP_HORIZONTAL_PADDING,
+        help="Horizontal padding (in pixels) for timestamps.",
+        dest="timestamp_horizontal_padding")
+    parser.add_argument(
+        "--timestamp-vertical-padding",
+        type=int,
+        default=DEFAULT_TIMESTAMP_VERTICAL_PADDING,
+        help="Vertical padding (in pixels) for timestamps.",
+        dest="timestamp_vertical_padding")
     parser.add_argument(
         "-r", "--recursive",
         action="store_true",
