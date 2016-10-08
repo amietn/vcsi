@@ -32,9 +32,9 @@ Grid = namedtuple('Grid', ['x', 'y'])
 Frame = namedtuple('Frame', ['filename', 'blurriness', 'timestamp', 'avg_color'])
 Color = namedtuple('Color', ['r', 'g', 'b', 'a'])
 
-DEFAULT_METADATA_FONT_SIZE = 12
+DEFAULT_METADATA_FONT_SIZE = 16
 DEFAULT_METADATA_FONT = "/usr/share/fonts/TTF/DejaVuSans-Bold.ttf"
-DEFAULT_TIMESTAMP_FONT_SIZE = 10
+DEFAULT_TIMESTAMP_FONT_SIZE = 12
 DEFAULT_TIMESTAMP_FONT = "/usr/share/fonts/TTF/DejaVuSans.ttf"
 DEFAULT_CONTACT_SHEET_WIDTH = 1500
 DEFAULT_DELAY_PERCENT = None
