@@ -1,8 +1,15 @@
 from setuptools import setup, find_packages
 from codecs import open
 from os import path
+import sys
 
 here = path.abspath(path.dirname(__file__))
+
+
+install_requires=['numpy', 'pillow', 'jinja2']
+
+if sys.version_info < (3,4):
+    install_requires += ['enum34']
 
 
 setup(
@@ -37,14 +44,13 @@ setup(
     # your project is installed. For an analysis of "install_requires" vs pip's
     # requirements files see:
     # https://packaging.python.org/en/latest/requirements.html
-    install_requires=['numpy', 'pillow', 'jinja2'],
+    install_requires=install_requires,
 
     # List additional groups of dependencies here (e.g. development
     # dependencies). You can install these using the following syntax,
     # for example:
     # $ pip install -e .[dev,test]
     extras_require={
-        ':python_version<="2.7"': ['enum34'],
         'dev': ['check-manifest'],
         'test': ['coverage'],
     },
