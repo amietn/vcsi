@@ -19,6 +19,7 @@ import math
 import tempfile
 import textwrap
 from collections import namedtuple
+from enum import Enum
 
 from PIL import Image, ImageDraw, ImageFont
 import numpy
@@ -31,6 +32,9 @@ __author__ = "Nils Amiet"
 Grid = namedtuple('Grid', ['x', 'y'])
 Frame = namedtuple('Frame', ['filename', 'blurriness', 'timestamp', 'avg_color'])
 Color = namedtuple('Color', ['r', 'g', 'b', 'a'])
+
+TimestampPosition = Enum('TimestampPosition', "north south east west ne nw se sw center")
+VALID_TIMESTAMP_POSITIONS = [x.name for x in TimestampPosition]
 
 DEFAULT_METADATA_FONT_SIZE = 16
 DEFAULT_METADATA_FONT = "/usr/share/fonts/TTF/DejaVuSans-Bold.ttf"
@@ -60,6 +64,9 @@ DEFAULT_TIMESTAMP_HORIZONTAL_MARGIN = 5
 DEFAULT_TIMESTAMP_VERTICAL_MARGIN = 5
 DEFAULT_IMAGE_QUALITY = 100
 DEFAULT_IMAGE_FORMAT = "png"
+DEFAULT_TIMESTAMP_POSITION = TimestampPosition.se
+
+
 
 
 class MediaInfo(object):
@@ -669,6 +676,38 @@ def prepare_metadata_text_lines(media_info, header_font, header_margin, width, t
     return header_lines
 
 
+def compute_timestamp_position(args, w, h, text_size, desired_size, rectangle_hpadding, rectangle_vpadding):
+    position = args.timestamp_position
+
+    x_offset = 0
+    if position in [TimestampPosition.west, TimestampPosition.nw, TimestampPosition.sw]:
+        x_offset = args.timestamp_horizontal_margin
+    elif position in [TimestampPosition.north, TimestampPosition.center, TimestampPosition.south]:
+        x_offset = (desired_size[0] / 2) - (text_size[0] / 2) - rectangle_hpadding
+    else:
+        x_offset = desired_size[0] - text_size[0] - args.timestamp_horizontal_margin - 2 * rectangle_hpadding
+
+    y_offset = 0
+    if position in [TimestampPosition.nw, TimestampPosition.north, TimestampPosition.ne]:
+        y_offset = args.timestamp_vertical_margin
+    elif position in [TimestampPosition.west, TimestampPosition.center, TimestampPosition.east]:
+        y_offset = (desired_size[1] / 2) - (text_size[1] /2) - rectangle_vpadding
+    else:
+        y_offset = desired_size[1] - text_size[1] - args.timestamp_vertical_margin - 2 * rectangle_vpadding
+
+    upper_left = (
+        w + x_offset,
+        h + y_offset
+    )
+
+    bottom_right = (
+        upper_left[0] + text_size[0] + 2 * rectangle_hpadding,
+        upper_left[1] + text_size[1] + 2 * rectangle_vpadding
+    )
+
+    return upper_left, bottom_right
+
+
 def compose_contact_sheet(
         media_info,
         frames,
@@ -739,9 +778,6 @@ def compose_contact_sheet(
         f.putalpha(args.capture_alpha)
         image_capture_layer.paste(f, (w, h))
 
-        # update x position early for timestamp
-        w += desired_size[0] + args.grid_horizontal_spacing
-
         # show timestamp
         if args.show_timestamp:
             pretty_timestamp = MediaInfo.pretty_duration(frame.timestamp, show_centis=True)
@@ -751,14 +787,9 @@ def compose_contact_sheet(
             rectangle_hpadding = args.timestamp_horizontal_padding
             rectangle_vpadding = args.timestamp_vertical_padding
 
-            upper_left = (
-                w - text_size[0] - 2 * rectangle_hpadding - args.grid_horizontal_spacing - args.timestamp_horizontal_margin,
-                h + desired_size[1] - text_size[1] - 2 * rectangle_vpadding - args.timestamp_vertical_margin
-            )
-            bottom_right = (
-                upper_left[0] + text_size[0] + 2 * rectangle_hpadding,
-                upper_left[1] + text_size[1] + 2 * rectangle_vpadding
-            )
+            # TODO compute upper_left and bottom_rigth
+            upper_left, bottom_right = compute_timestamp_position(args, w, h, text_size, desired_size, rectangle_hpadding, rectangle_vpadding)
+
             draw_timestamp_layer.rectangle(
                 [upper_left, bottom_right],
                 fill=args.timestamp_background_color
@@ -774,6 +805,9 @@ def compose_contact_sheet(
                 font=timestamp_font,
                 fill=args.timestamp_font_color
             )
+
+        # update x position for next frame
+        w += desired_size[0] + args.grid_horizontal_spacing
 
         # update y position
         if (i + 1) % args.grid.x == 0:
@@ -893,6 +927,14 @@ def manual_timestamps(string):
     except Exception as e:
         print(e)
         error = "Manual frame timestamps must be comma-seperated and of the form h:mm:ss.mmmm"
+        raise argparse.ArgumentTypeError(error)
+
+
+def timestamp_position_type(string):
+    try:
+        return getattr(TimestampPosition, string)
+    except AttributeError:
+        error = "Invalid timestamp position: %s. Valid positions are: %s" % (string, VALID_TIMESTAMP_POSITIONS)
         raise argparse.ArgumentTypeError(error)
 
 
@@ -1108,6 +1150,12 @@ def main():
         default=DEFAULT_IMAGE_FORMAT,
         help="Output image format. Can be any format supported by pillow. For example 'png' or 'jpg'.",
         dest="image_format")
+    parser.add_argument(
+        "-T", "--timestamp-position",
+        type=timestamp_position_type,
+        default=DEFAULT_TIMESTAMP_POSITION,
+        help="Timestamp position. Must be one of %s." % (VALID_TIMESTAMP_POSITIONS,),
+        dest="timestamp_position")
     parser.add_argument(
         "-r", "--recursive",
         action="store_true",
