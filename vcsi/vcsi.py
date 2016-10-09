@@ -59,6 +59,7 @@ DEFAULT_TIMESTAMP_VERTICAL_PADDING = 1
 DEFAULT_TIMESTAMP_HORIZONTAL_MARGIN = 5
 DEFAULT_TIMESTAMP_VERTICAL_MARGIN = 5
 DEFAULT_IMAGE_QUALITY = 100
+DEFAULT_IMAGE_FORMAT = "png"
 
 
 class MediaInfo(object):
@@ -800,9 +801,13 @@ def save_image(args, image, media_info, output_path):
     """Save the image to `output_path`
     """
     if not output_path:
-        output_path = media_info.filename + ".png"
+        output_path = media_info.filename + "." + args.image_format
 
-    image.save(output_path, optimize=True, quality=args.image_quality)
+    try:
+        image.save(output_path, optimize=True, quality=args.image_quality)
+        return True
+    except KeyError:
+        return False
 
 
 def cleanup(frames):
@@ -889,6 +894,15 @@ def manual_timestamps(string):
         print(e)
         error = "Manual frame timestamps must be comma-seperated and of the form h:mm:ss.mmmm"
         raise argparse.ArgumentTypeError(error)
+
+
+def error(message):
+    print("[ERROR] %s" % (message,))
+
+
+def error_exit(message):
+    error(message)
+    sys.exit(-1)
 
 
 def main():
@@ -1086,8 +1100,14 @@ def main():
         "--quality",
         type=int,
         default=DEFAULT_IMAGE_QUALITY,
-        help="Output image quality. Must be an integer in the range 0-100. 100 = best quality",
+        help="Output image quality. Must be an integer in the range 0-100. 100 = best quality.",
         dest="image_quality")
+    parser.add_argument(
+        "-f", "--format",
+        type=str,
+        default=DEFAULT_IMAGE_FORMAT,
+        help="Output image format. Can be any format supported by pillow. For example 'png' or 'jpg'.",
+        dest="image_format")
     parser.add_argument(
         "-r", "--recursive",
         action="store_true",
@@ -1180,10 +1200,13 @@ def process_file(path, args):
     print("Composing contact sheet...")
     image = compose_contact_sheet(media_info, selected_frames, args)
 
-    save_image(args, image, media_info, output_path)
+    is_save_successful = save_image(args, image, media_info, output_path)
 
     print("Cleaning up temporary files...")
     cleanup(temp_frames)
+
+    if not is_save_successful:
+        error_exit("Unsupported image format: %s." % (args.image_format,))
 
 
 if __name__ == "__main__":
