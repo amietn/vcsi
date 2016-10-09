@@ -67,8 +67,6 @@ DEFAULT_IMAGE_FORMAT = "png"
 DEFAULT_TIMESTAMP_POSITION = TimestampPosition.se
 
 
-
-
 class MediaInfo(object):
     """Collect information about a video file
     """
@@ -677,6 +675,8 @@ def prepare_metadata_text_lines(media_info, header_font, header_margin, width, t
 
 
 def compute_timestamp_position(args, w, h, text_size, desired_size, rectangle_hpadding, rectangle_vpadding):
+    """Compute the (x,y) position of the upper left and bottom right points of the rectangle surrounding timestamp text.
+    """
     position = args.timestamp_position
 
     x_offset = 0
@@ -691,7 +691,7 @@ def compute_timestamp_position(args, w, h, text_size, desired_size, rectangle_hp
     if position in [TimestampPosition.nw, TimestampPosition.north, TimestampPosition.ne]:
         y_offset = args.timestamp_vertical_margin
     elif position in [TimestampPosition.west, TimestampPosition.center, TimestampPosition.east]:
-        y_offset = (desired_size[1] / 2) - (text_size[1] /2) - rectangle_vpadding
+        y_offset = (desired_size[1] / 2) - (text_size[1] / 2) - rectangle_vpadding
     else:
         y_offset = desired_size[1] - text_size[1] - args.timestamp_vertical_margin - 2 * rectangle_vpadding
 
@@ -787,8 +787,8 @@ def compose_contact_sheet(
             rectangle_hpadding = args.timestamp_horizontal_padding
             rectangle_vpadding = args.timestamp_vertical_padding
 
-            # TODO compute upper_left and bottom_rigth
-            upper_left, bottom_right = compute_timestamp_position(args, w, h, text_size, desired_size, rectangle_hpadding, rectangle_vpadding)
+            upper_left, bottom_right = compute_timestamp_position(args, w, h, text_size, desired_size,
+                                                                  rectangle_hpadding, rectangle_vpadding)
 
             draw_timestamp_layer.rectangle(
                 [upper_left, bottom_right],
@@ -931,6 +931,7 @@ def manual_timestamps(string):
 
 
 def timestamp_position_type(string):
+    """Type parser for argparse. Argument must be a valid timestamp position"""
     try:
         return getattr(TimestampPosition, string)
     except AttributeError:
@@ -939,10 +940,12 @@ def timestamp_position_type(string):
 
 
 def error(message):
+    """Print an error message."""
     print("[ERROR] %s" % (message,))
 
 
 def error_exit(message):
+    """Print an error message and exit"""
     error(message)
     sys.exit(-1)
 
