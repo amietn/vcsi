@@ -1,7 +1,7 @@
 # Maintainer: Nils Amiet <amietn@foobar>
 pkgname=vcsi-git
-pkgver=5
-pkgrel=2
+pkgver=6
+pkgrel=1
 pkgdesc="Create video contact sheets, thumbnails"
 arch=(any)
 url="https://github.com/amietn/vcsi"
