@@ -58,6 +58,7 @@ DEFAULT_TIMESTAMP_HORIZONTAL_PADDING = 3
 DEFAULT_TIMESTAMP_VERTICAL_PADDING = 1
 DEFAULT_TIMESTAMP_HORIZONTAL_MARGIN = 5
 DEFAULT_TIMESTAMP_VERTICAL_MARGIN = 5
+DEFAULT_IMAGE_QUALITY = 100
 
 
 class MediaInfo(object):
@@ -795,13 +796,13 @@ def compose_contact_sheet(
     return out_image
 
 
-def save_image(image, media_info, output_path):
+def save_image(args, image, media_info, output_path):
     """Save the image to `output_path`
     """
     if not output_path:
         output_path = media_info.filename + ".png"
 
-    image.save(output_path)
+    image.save(output_path, optimize=True, quality=args.image_quality)
 
 
 def cleanup(frames):
@@ -1082,6 +1083,12 @@ def main():
         help="Vertical margin (in pixels) for timestamps.",
         dest="timestamp_vertical_margin")
     parser.add_argument(
+        "--quality",
+        type=int,
+        default=DEFAULT_IMAGE_QUALITY,
+        help="Output image quality. Must be an integer in the range 0-100. 100 = best quality",
+        dest="image_quality")
+    parser.add_argument(
         "-r", "--recursive",
         action="store_true",
         help="Process every file in the specified directory recursively.",
@@ -1173,7 +1180,7 @@ def process_file(path, args):
     print("Composing contact sheet...")
     image = compose_contact_sheet(media_info, selected_frames, args)
 
-    save_image(image, media_info, output_path)
+    save_image(args, image, media_info, output_path)
 
     print("Cleaning up temporary files...")
     cleanup(temp_frames)
