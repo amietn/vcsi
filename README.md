@@ -80,30 +80,37 @@ Must be in your PATH:
 
 ```
 $ vcsi -h
-usage: vcsi [-h] [-o OUTPUT_PATH] [-n NUM_FRAMES]
-            [--start-delay-percent START_DELAY_PERCENT]
+usage: vcsi [-h] [-o OUTPUT_PATH] [--start-delay-percent START_DELAY_PERCENT]
             [--end-delay-percent END_DELAY_PERCENT]
             [--delay-percent DELAY_PERCENT] [--grid-spacing GRID_SPACING]
             [--grid-horizontal-spacing GRID_HORIZONTAL_SPACING]
             [--grid-vertical-spacing GRID_VERTICAL_SPACING] [-w VCS_WIDTH]
-            [-g MXN] [-s NUM_SAMPLES] [-t]
+            [-g GRID] [-s NUM_SAMPLES] [-t]
             [--metadata-font-size METADATA_FONT_SIZE]
             [--metadata-font METADATA_FONT]
             [--timestamp-font-size TIMESTAMP_FONT_SIZE]
-            [--timestamp-font TIMESTAMP_FONT] [-v]
-            filename
+            [--timestamp-font TIMESTAMP_FONT]
+            [--metadata-position METADATA_POSITION]
+            [--background-color BACKGROUND_COLOR]
+            [--metadata-font-color METADATA_FONT_COLOR]
+            [--timestamp-font-color TIMESTAMP_FONT_COLOR]
+            [--timestamp-background-color TIMESTAMP_BACKGROUND_COLOR]
+            [--template METADATA_TEMPLATE_PATH] [-m MANUAL_TIMESTAMPS] [-v]
+            [-a] [-A ACCURATE_DELAY_SECONDS]
+            [--metadata-margin METADATA_MARGIN] [-r]
+            [--capture-alpha CAPTURE_ALPHA] [--version]
+            [--list-template-attributes]
+            filenames [filenames ...]
 
 Create a video contact sheet
 
 positional arguments:
-  filename
+  filenames
 
 optional arguments:
   -h, --help            show this help message and exit
   -o OUTPUT_PATH, --output OUTPUT_PATH
                         save to output file
-  -n NUM_FRAMES, --num-frames NUM_FRAMES
-                        capture n frames
   --start-delay-percent START_DELAY_PERCENT
                         do not capture frames in the first n percent of total
                         time
@@ -122,7 +129,7 @@ optional arguments:
                         number of pixels spacing captures vertically
   -w VCS_WIDTH, --width VCS_WIDTH
                         width of the generated contact sheet
-  -g MXN, --grid MXN    display frames on a mxn grid (for example 4x5)
+  -g GRID, --grid GRID  display frames on a mxn grid (for example 4x5)
   -s NUM_SAMPLES, --num-samples NUM_SAMPLES
                         number of samples
   -t, --show-timestamp  display timestamp for each frame
@@ -134,7 +141,45 @@ optional arguments:
                         size of the font used for timestamps
   --timestamp-font TIMESTAMP_FONT
                         TTF font used for timestamps
+  --metadata-position METADATA_POSITION
+                        Position of the metadata header. Must be one of
+                        ['top', 'bottom', 'hidden']
+  --background-color BACKGROUND_COLOR
+                        Color of the background in hexadecimal, for example
+                        AABBCC
+  --metadata-font-color METADATA_FONT_COLOR
+                        Color of the metadata font in hexadecimal, for example
+                        AABBCC
+  --timestamp-font-color TIMESTAMP_FONT_COLOR
+                        Color of the timestamp font in hexadecimal, for
+                        example AABBCC
+  --timestamp-background-color TIMESTAMP_BACKGROUND_COLOR
+                        Color of the timestamp background rectangle in
+                        hexadecimal, for example AABBCC
+  --template METADATA_TEMPLATE_PATH
+                        Path to metadata template file
+  -m MANUAL_TIMESTAMPS, --manual MANUAL_TIMESTAMPS
+                        Comma-seperated list of frame timestamps to use, for
+                        example 1:11:11.111,2:22:22.222
   -v, --verbose         display verbose messages
+  -a, --accurate        Make accurate captures. This capture mode is way
+                        slower than the default one but it helps when
+                        capturing frames from HEVC videos.
+  -A ACCURATE_DELAY_SECONDS, --accurate-delay-seconds ACCURATE_DELAY_SECONDS
+                        Fast skip to N seconds before capture time, then do
+                        accurate capture (decodes N seconds of video before
+                        each capture). This is used with accurate caputre mode
+                        only.
+  --metadata-margin METADATA_MARGIN
+                        Margin (in pixels) in the metadata header.
+  -r, --recursive       Process every file in the specified directory
+                        recursively.
+  --capture-alpha CAPTURE_ALPHA
+                        Alpha channel value for the captures (transparency in
+                        range [0, 255]). Defaults to 255 (opaque)
+  --version             show program's version number and exit
+  --list-template-attributes
+
 ```
 
 ## Metadata templates
