@@ -52,6 +52,8 @@ DEFAULT_METADATA_FONT_COLOR = "ffffff"
 DEFAULT_BACKGROUND_COLOR = "000000"
 DEFAULT_TIMESTAMP_FONT_COLOR = "ffffff"
 DEFAULT_TIMESTAMP_BACKGROUND_COLOR = "000000aa"
+DEFAULT_TIMESTAMP_BORDER_COLOR = "000000"
+DEFAULT_TIMESTAMP_BORDER_SIZE = 1
 DEFAULT_ACCURATE_DELAY_SECONDS = 1
 DEFAULT_METADATA_MARGIN = 10
 DEFAULT_METADATA_HORIZONTAL_MARGIN = DEFAULT_METADATA_MARGIN
@@ -790,10 +792,39 @@ def compose_contact_sheet(
             upper_left, bottom_right = compute_timestamp_position(args, w, h, text_size, desired_size,
                                                                   rectangle_hpadding, rectangle_vpadding)
 
-            draw_timestamp_layer.rectangle(
-                [upper_left, bottom_right],
-                fill=args.timestamp_background_color
-            )
+            if not args.timestamp_border_mode:
+                draw_timestamp_layer.rectangle(
+                    [upper_left, bottom_right],
+                    fill=args.timestamp_background_color
+                )
+            else:
+                offset_factor = args.timestamp_border_size
+                offsets = [
+                    (1, 0),
+                    (-1, 0),
+                    (0, 1),
+                    (0, -1),
+                    (1, 1),
+                    (1, -1),
+                    (-1, 1),
+                    (-1, -1)
+                ]
+
+                final_offsets = []
+                for offset_counter in range(1, offset_factor + 1):
+                    final_offsets += [(x[0] * offset_counter, x[1] * offset_counter) for x in offsets]
+
+                for offset in final_offsets:
+                    # draw border first
+                    draw_timestamp_text_layer.text(
+                        (
+                            upper_left[0] + rectangle_hpadding + offset[0],
+                            upper_left[1] + rectangle_vpadding + offset[1]
+                        ),
+                        pretty_timestamp,
+                        font=timestamp_font,
+                        fill=args.timestamp_border_color
+                    )
 
             # draw timestamp
             draw_timestamp_text_layer.text(
@@ -1071,6 +1102,12 @@ def main():
         type=hex_color_type,
         default=hex_color_type(DEFAULT_TIMESTAMP_BACKGROUND_COLOR))
     parser.add_argument(
+        "--timestamp-border-color",
+        help="Color of the timestamp border in hexadecimal, for example AABBCC",
+        dest="timestamp_border_color",
+        type=hex_color_type,
+        default=hex_color_type(DEFAULT_TIMESTAMP_BORDER_COLOR))
+    parser.add_argument(
         "--template",
         help="Path to metadata template file",
         dest="metadata_template_path",
@@ -1164,6 +1201,17 @@ def main():
         action="store_true",
         help="Process every file in the specified directory recursively.",
         dest="recursive")
+    parser.add_argument(
+        "--timestamp-border-mode",
+        action="store_true",
+        help="Draw timestamp text with a border instead of the default rectangle.",
+        dest="timestamp_border_mode")
+    parser.add_argument(
+        "--timestamp-border-size",
+        type=int,
+        default=DEFAULT_TIMESTAMP_BORDER_SIZE,
+        help="Size of the timestamp border in pixels (used only with --timestamp-border-mode).",
+        dest="timestamp_border_size")
     parser.add_argument(
         "--capture-alpha",
         type=int,
