@@ -25,6 +25,7 @@ from PIL import Image, ImageDraw, ImageFont
 import numpy
 from jinja2 import Template
 import texttable
+from glob import glob
 
 __version__ = "6"
 __author__ = "Nils Amiet"
@@ -1247,7 +1248,8 @@ def main():
                     if not os.path.isdir(abs_filepath):
                         process_file(abs_filepath, args)
             else:
-                process_file(path, args)
+                for filename in glob(path):
+                    process_file(filename, args)
 
 
 def process_file(path, args):
