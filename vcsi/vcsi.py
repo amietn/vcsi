@@ -20,12 +20,12 @@ import tempfile
 import textwrap
 from collections import namedtuple
 from enum import Enum
+from glob import glob
 
 from PIL import Image, ImageDraw, ImageFont
 import numpy
 from jinja2 import Template
 import texttable
-from glob import glob
 
 __version__ = "6"
 __author__ = "Nils Amiet"
@@ -1248,7 +1248,10 @@ def main():
                     if not os.path.isdir(abs_filepath):
                         process_file(abs_filepath, args)
             else:
-                for filename in glob(path):
+                files_to_process = glob(path)
+                if len(files_to_process) == 0:
+                    files_to_process = [path]
+                for filename in files_to_process:
                     process_file(filename, args)
 
 
