@@ -68,6 +68,7 @@ DEFAULT_TIMESTAMP_VERTICAL_MARGIN = 5
 DEFAULT_IMAGE_QUALITY = 100
 DEFAULT_IMAGE_FORMAT = "png"
 DEFAULT_TIMESTAMP_POSITION = TimestampPosition.se
+DEFAULT_FRAME_TYPE = None
 
 
 class MediaInfo(object):
@@ -332,10 +333,11 @@ class MediaCapture(object):
     """Capture frames of a video
     """
 
-    def __init__(self, path, accurate=False, skip_delay_seconds=DEFAULT_ACCURATE_DELAY_SECONDS):
+    def __init__(self, path, accurate=False, skip_delay_seconds=DEFAULT_ACCURATE_DELAY_SECONDS, frame_type=DEFAULT_FRAME_TYPE):
         self.path = path
         self.accurate = accurate
         self.skip_delay_seconds = skip_delay_seconds
+        self.frame_type = frame_type
 
     def make_capture(self, time, width, height, out_path="out.png"):
         """Capture a frame at given time with given width and height using ffmpeg
@@ -348,6 +350,22 @@ class MediaCapture(object):
             "-i", self.path,
             "-vframes", "1",
             "-s", "%sx%s" % (width, height),
+        ]
+
+        if self.frame_type is not None:
+            select_args = [
+                "-vf", "select='eq(frame_type\\," + self.frame_type + ")'"
+            ]
+
+        if self.frame_type == "key":
+            select_args = [
+                "-vf", "select=key"
+            ]
+
+        if self.frame_type is not None:
+            ffmpeg_command += select_args
+
+        ffmpeg_command += [
             "-y",
             out_path
         ]
@@ -363,6 +381,12 @@ class MediaCapture(object):
                     "-ss", time,
                     "-vframes", "1",
                     "-s", "%sx%s" % (width, height),
+                ]
+
+                if self.frame_type is not None:
+                    ffmpeg_command += select_args
+
+                ffmpeg_command += [
                     "-y",
                     out_path
                 ]
@@ -375,6 +399,12 @@ class MediaCapture(object):
                     "-ss", skip_delay,
                     "-vframes", "1",
                     "-s", "%sx%s" % (width, height),
+                ]
+
+                if self.frame_type is not None:
+                    ffmpeg_command += select_args
+
+                ffmpeg_command += [
                     "-y",
                     out_path
                 ]
@@ -1227,6 +1257,12 @@ def main():
         "--list-template-attributes",
         action="store_true",
         dest="list_template_attributes")
+    parser.add_argument(
+        "--frame-type",
+        type=str,
+        default=DEFAULT_FRAME_TYPE,
+        help="Frame type passed to ffmpeg 'select=eq(pict_type,FRAME_TYPE)' filter. Should be one of ('I', 'B', 'P') or the special type 'key' which will use the 'select=key' filter instead.",
+        dest="frame_type")
 
     args = parser.parse_args()
 
@@ -1268,7 +1304,9 @@ def process_file(path, args):
     media_capture = MediaCapture(
         path,
         accurate=args.is_accurate,
-        skip_delay_seconds=args.accurate_delay_seconds)
+        skip_delay_seconds=args.accurate_delay_seconds,
+        frame_type=args.frame_type
+    )
 
     # metadata margins
     if not args.metadata_margin == DEFAULT_METADATA_MARGIN:
