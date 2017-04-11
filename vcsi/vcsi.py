@@ -755,8 +755,20 @@ def compose_contact_sheet(
         horizontal_margin=args.grid_horizontal_spacing)
     height = args.grid.y * (desired_size[1] + args.grid_vertical_spacing) - args.grid_vertical_spacing
 
-    header_font = ImageFont.truetype(args.metadata_font, args.metadata_font_size)
-    timestamp_font = ImageFont.truetype(args.timestamp_font, args.timestamp_font_size)
+    try:
+        header_font = ImageFont.truetype(args.metadata_font, args.metadata_font_size)
+    except OSError:
+        if args.metadata_font == DEFAULT_METADATA_FONT:
+            header_font = ImageFont.load_default()
+        else:
+            raise
+    try:
+        timestamp_font = ImageFont.truetype(args.timestamp_font, args.timestamp_font_size)
+    except OSError:
+        if args.timestamp_font == DEFAULT_TIMESTAMP_FONT:
+            timestamp_font = ImageFont.load_default()
+        else:
+            raise
 
     header_lines = prepare_metadata_text_lines(
         media_info,
