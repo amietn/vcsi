@@ -541,7 +541,7 @@ def select_sharpest_images(
         status = "Sampling... %s/%s" % ((i + 1), args.num_samples)
         print(status, end="\r")
 
-        filename = tempfile.mkstemp(suffix=".png")[1]
+        fd, filename = tempfile.mkstemp(suffix=".png")
 
         media_capture.make_capture(
             timestamp[1],
@@ -559,6 +559,7 @@ def select_sharpest_images(
                 avg_color=avg_color
             )
         ]
+        os.close(fd)
 
     time_sorted = sorted(blurs, key=lambda x: x.timestamp)
 
