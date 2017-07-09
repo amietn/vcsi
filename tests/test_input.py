@@ -31,7 +31,7 @@ def test_grid_rows_integer():
     assert_raises(ArgumentTypeError, mxn_type, '4x4.1')
 
 
-def test_grid_columns_positive():
+def test_grid_rows_positive():
     assert_raises(ArgumentTypeError, mxn_type, '4x-1')
 
 
