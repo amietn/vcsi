@@ -35,7 +35,10 @@ def test_grid_rows_integer():
     assert_equals(test_grid.x, 4)
     assert_equals(test_grid.y, -1)
 
-    assert_raises(ArgumentTypeError, mxn_type, '4x1x4')
+    test_grid = mxn_type('4x1x4')
+
+    assert_equals(test_grid.x, 4)
+    assert_equals(test_grid.y, 1)
 
 
 def test_grid_format():
