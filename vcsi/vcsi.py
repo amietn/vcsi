@@ -947,9 +947,11 @@ def mxn_type(string):
     """
     try:
         split = string.split("x")
+        assert (len(split) == 2)
         m = int(split[0])
         assert (m > 0)
         n = int(split[1])
+        assert (n > 0)
         return Grid(m, n)
     except (IndexError, ValueError, AssertionError):
         error = "Grid must be of the form mxn, where m is the number of columns and n is the number of rows."

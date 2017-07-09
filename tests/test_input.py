@@ -30,20 +30,16 @@ def test_grid_rows_integer():
 
     assert_raises(ArgumentTypeError, mxn_type, '4x4.1')
 
-    test_grid = mxn_type('4x-1')
 
-    assert_equals(test_grid.x, 4)
-    assert_equals(test_grid.y, -1)
-
-    test_grid = mxn_type('4x1x4')
-
-    assert_equals(test_grid.x, 4)
-    assert_equals(test_grid.y, 1)
+def test_grid_columns_positive():
+    assert_raises(ArgumentTypeError, mxn_type, '4x-1')
 
 
 def test_grid_format():
     assert_raises(ArgumentTypeError, mxn_type, '')
 
     assert_raises(ArgumentTypeError, mxn_type, '4xx4')
+
+    assert_raises(ArgumentTypeError, mxn_type, '4x1x4')
 
     assert_raises(ArgumentTypeError, mxn_type, '4')
