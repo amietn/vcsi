@@ -948,9 +948,10 @@ def mxn_type(string):
     try:
         split = string.split("x")
         m = int(split[0])
+        assert (m > 0)
         n = int(split[1])
         return Grid(m, n)
-    except:
+    except (IndexError, ValueError, AssertionError):
         error = "Grid must be of the form mxn, where m is the number of columns and n is the number of rows."
         raise argparse.ArgumentTypeError(error)
 
@@ -1327,6 +1328,23 @@ def process_file(path, args):
 
     args.num_selected = args.grid.x * args.grid.y
 
+    # manual frame selection
+    if args.manual_timestamps is not None:
+        mframes_size = len(args.manual_timestamps)
+        grid_size = args.grid.x * args.grid.y
+
+        args.num_selected = mframes_size
+        args.num_samples = mframes_size
+
+        if not mframes_size == grid_size:
+            # specified number of columns
+            y = math.ceil(mframes_size / args.grid.x)
+            args.grid = Grid(args.grid.x, y)
+
+    if args.num_selected < 1:
+        error = "One of --grid, --manual must be specified"
+        raise argparse.ArgumentTypeError(error)
+
     if args.num_samples is None:
         args.num_samples = args.num_selected
 
@@ -1337,17 +1355,6 @@ def process_file(path, args):
     if args.grid_spacing is not None:
         args.grid_horizontal_spacing = args.grid_spacing
         args.grid_vertical_spacing = args.grid_spacing
-
-    # manual frame selection
-    if args.manual_timestamps is not None:
-        mframes_size = len(args.manual_timestamps)
-        grid_size = args.grid.x * args.grid.y
-
-        args.num_selected = mframes_size
-        args.num_samples = mframes_size
-
-        if not mframes_size == grid_size:
-            args.grid = Grid(1, mframes_size)
 
     selected_frames, temp_frames = select_sharpest_images(media_info, media_capture, args)
 
