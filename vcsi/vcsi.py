@@ -30,9 +30,20 @@ import texttable
 __version__ = "6"
 __author__ = "Nils Amiet"
 
-Grid = namedtuple('Grid', ['x', 'y'])
-Frame = namedtuple('Frame', ['filename', 'blurriness', 'timestamp', 'avg_color'])
-Color = namedtuple('Color', ['r', 'g', 'b', 'a'])
+class Grid(namedtuple('Grid', ['x', 'y'])):
+    def __str__(self):
+        return "%sx%s" % (self.x, self.y)
+
+class Frame(namedtuple('Frame', ['filename', 'blurriness', 'timestamp', 'avg_color'])):
+    pass
+
+class Color(namedtuple('Color', ['r', 'g', 'b', 'a'])):
+    def to_hex(self, component):
+        h = hex(component).replace("0x", "").upper()
+        return h if len(h) == 2 else "0" + h
+
+    def __str__(self):
+        return "".join([self.to_hex(x) for x in [self.r, self.g, self.b, self.a]])
 
 TimestampPosition = Enum('TimestampPosition', "north south east west ne nw se sw center")
 VALID_TIMESTAMP_POSITIONS = [x.name for x in TimestampPosition]
@@ -1031,7 +1042,8 @@ def error_exit(message):
 def main():
     """Program entry point
     """
-    parser = argparse.ArgumentParser(description="Create a video contact sheet")
+    parser = argparse.ArgumentParser(description="Create a video contact sheet",
+                                     formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument("filenames", nargs="+")
     parser.add_argument(
         "-o", "--output",
