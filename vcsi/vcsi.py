@@ -675,7 +675,7 @@ def max_line_length(
     max_length = 0
     for i in range(len(text) + 1):
         text_chunk = text[:i]
-        text_width = metadata_font.getsize(text_chunk)[0]
+        text_width = 0 if len(text_chunk) == 0 else metadata_font.getsize(text_chunk)[0]
 
         max_length = i
         if text_width > max_width:
