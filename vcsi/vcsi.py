@@ -923,6 +923,7 @@ def save_image(args, image, media_info, output_path):
     if not output_path:
         output_path = media_info.filename + "." + args.image_format
 
+    image = image.convert("RGB")
     try:
         image.save(output_path, optimize=True, quality=args.image_quality)
         return True
