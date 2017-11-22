@@ -27,7 +27,7 @@ import numpy
 from jinja2 import Template
 import texttable
 
-__version__ = "6"
+__version__ = "7"
 __author__ = "Nils Amiet"
 
 class Grid(namedtuple('Grid', ['x', 'y'])):

@@ -1,6 +1,6 @@
 # Maintainer: Nils Amiet <amietn@foobar>
 pkgname=vcsi
-pkgver=6
+pkgver=7
 pkgrel=1
 pkgdesc="Create video contact sheets, thumbnails"
 arch=(any)
