@@ -1292,6 +1292,11 @@ def main():
         default=DEFAULT_FRAME_TYPE,
         help="Frame type passed to ffmpeg 'select=eq(pict_type,FRAME_TYPE)' filter. Should be one of ('I', 'B', 'P') or the special type 'key' which will use the 'select=key' filter instead.",
         dest="frame_type")
+    parser.add_argument(
+        "--ignore-errors",
+        action="store_true",
+        help="Ignore any error encountered while processing files recursively and continue to the next file.",
+        dest="ignore_errors")
 
     args = parser.parse_args()
 
@@ -1304,7 +1309,13 @@ def main():
             for root, subdirs, files in os.walk(path):
                 for f in files:
                     filepath = os.path.join(root, f)
-                    process_file(filepath, args)
+                    try:
+                        process_file(filepath, args)
+                    except Exception:
+                        if not args.ignore_errors:
+                            raise
+                        else:
+                            print("[WARN]: failed to process {} ... skipping.".format(filepath), file=sys.stderr)
     else:
         for path in args.filenames:
             if os.path.isdir(path):
