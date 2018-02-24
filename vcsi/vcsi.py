@@ -1022,7 +1022,7 @@ def hex_color_type(string):
 
 
 def manual_timestamps(string):
-    """Type parser for argparse. Argument must be a comma-seperated list of frame timestamps.
+    """Type parser for argparse. Argument must be a comma-separated list of frame timestamps.
     For example 1:11:11.111,2:22:22.222
     """
     try:
@@ -1036,7 +1036,7 @@ def manual_timestamps(string):
         return timestamps
     except Exception as e:
         print(e)
-        error = "Manual frame timestamps must be comma-seperated and of the form h:mm:ss.mmmm"
+        error = "Manual frame timestamps must be comma-separated and of the form h:mm:ss.mmmm"
         raise argparse.ArgumentTypeError(error)
 
 
@@ -1212,7 +1212,7 @@ def main():
         default=None)
     parser.add_argument(
         "-m", "--manual",
-        help="Comma-seperated list of frame timestamps to use, for example 1:11:11.111,2:22:22.222",
+        help="Comma-separated list of frame timestamps to use, for example 1:11:11.111,2:22:22.222",
         dest="manual_timestamps",
         type=manual_timestamps,
         default=None)
