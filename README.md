@@ -96,11 +96,22 @@ usage: vcsi [-h] [-o OUTPUT_PATH] [--start-delay-percent START_DELAY_PERCENT]
             [--metadata-font-color METADATA_FONT_COLOR]
             [--timestamp-font-color TIMESTAMP_FONT_COLOR]
             [--timestamp-background-color TIMESTAMP_BACKGROUND_COLOR]
+            [--timestamp-border-color TIMESTAMP_BORDER_COLOR]
             [--template METADATA_TEMPLATE_PATH] [-m MANUAL_TIMESTAMPS] [-v]
             [-a] [-A ACCURATE_DELAY_SECONDS]
-            [--metadata-margin METADATA_MARGIN] [-r]
+            [--metadata-margin METADATA_MARGIN]
+            [--metadata-horizontal-margin METADATA_HORIZONTAL_MARGIN]
+            [--metadata-vertical-margin METADATA_VERTICAL_MARGIN]
+            [--timestamp-horizontal-padding TIMESTAMP_HORIZONTAL_PADDING]
+            [--timestamp-vertical-padding TIMESTAMP_VERTICAL_PADDING]
+            [--timestamp-horizontal-margin TIMESTAMP_HORIZONTAL_MARGIN]
+            [--timestamp-vertical-margin TIMESTAMP_VERTICAL_MARGIN]
+            [--quality IMAGE_QUALITY] [-f IMAGE_FORMAT]
+            [-T TIMESTAMP_POSITION] [-r] [--timestamp-border-mode]
+            [--timestamp-border-size TIMESTAMP_BORDER_SIZE]
             [--capture-alpha CAPTURE_ALPHA] [--version]
-            [--list-template-attributes]
+            [--list-template-attributes] [--frame-type FRAME_TYPE]
+            [--interval INTERVAL] [--ignore-errors]
             filenames [filenames ...]
 
 Create a video contact sheet
@@ -111,75 +122,132 @@ positional arguments:
 optional arguments:
   -h, --help            show this help message and exit
   -o OUTPUT_PATH, --output OUTPUT_PATH
-                        save to output file
+                        save to output file (default: None)
   --start-delay-percent START_DELAY_PERCENT
                         do not capture frames in the first n percent of total
-                        time
+                        time (default: 7)
   --end-delay-percent END_DELAY_PERCENT
                         do not capture frames in the last n percent of total
-                        time
+                        time (default: 7)
   --delay-percent DELAY_PERCENT
                         do not capture frames in the first and last n percent
-                        of total time
+                        of total time (default: None)
   --grid-spacing GRID_SPACING
                         number of pixels spacing captures both vertically and
-                        horizontally
+                        horizontally (default: None)
   --grid-horizontal-spacing GRID_HORIZONTAL_SPACING
                         number of pixels spacing captures horizontally
+                        (default: 5)
   --grid-vertical-spacing GRID_VERTICAL_SPACING
-                        number of pixels spacing captures vertically
+                        number of pixels spacing captures vertically (default:
+                        5)
   -w VCS_WIDTH, --width VCS_WIDTH
-                        width of the generated contact sheet
+                        width of the generated contact sheet (default: 1500)
   -g GRID, --grid GRID  display frames on a mxn grid (for example 4x5)
+                        (default: 4x4)
   -s NUM_SAMPLES, --num-samples NUM_SAMPLES
-                        number of samples
-  -t, --show-timestamp  display timestamp for each frame
+                        number of samples (default: None)
+  -t, --show-timestamp  display timestamp for each frame (default: False)
   --metadata-font-size METADATA_FONT_SIZE
-                        size of the font used for metadata
+                        size of the font used for metadata (default: 16)
   --metadata-font METADATA_FONT
-                        TTF font used for metadata
+                        TTF font used for metadata (default:
+                        /usr/share/fonts/TTF/DejaVuSans-Bold.ttf)
   --timestamp-font-size TIMESTAMP_FONT_SIZE
-                        size of the font used for timestamps
+                        size of the font used for timestamps (default: 12)
   --timestamp-font TIMESTAMP_FONT
-                        TTF font used for timestamps
+                        TTF font used for timestamps (default:
+                        /usr/share/fonts/TTF/DejaVuSans.ttf)
   --metadata-position METADATA_POSITION
                         Position of the metadata header. Must be one of
-                        ['top', 'bottom', 'hidden']
+                        ['top', 'bottom', 'hidden'] (default: top)
   --background-color BACKGROUND_COLOR
                         Color of the background in hexadecimal, for example
-                        AABBCC
+                        AABBCC (default: 000000FF)
   --metadata-font-color METADATA_FONT_COLOR
                         Color of the metadata font in hexadecimal, for example
-                        AABBCC
+                        AABBCC (default: FFFFFFFF)
   --timestamp-font-color TIMESTAMP_FONT_COLOR
                         Color of the timestamp font in hexadecimal, for
-                        example AABBCC
+                        example AABBCC (default: FFFFFFFF)
   --timestamp-background-color TIMESTAMP_BACKGROUND_COLOR
                         Color of the timestamp background rectangle in
-                        hexadecimal, for example AABBCC
+                        hexadecimal, for example AABBCC (default: 000000AA)
+  --timestamp-border-color TIMESTAMP_BORDER_COLOR
+                        Color of the timestamp border in hexadecimal, for
+                        example AABBCC (default: 000000FF)
   --template METADATA_TEMPLATE_PATH
-                        Path to metadata template file
+                        Path to metadata template file (default: None)
   -m MANUAL_TIMESTAMPS, --manual MANUAL_TIMESTAMPS
-                        Comma-seperated list of frame timestamps to use, for
-                        example 1:11:11.111,2:22:22.222
-  -v, --verbose         display verbose messages
+                        Comma-separated list of frame timestamps to use, for
+                        example 1:11:11.111,2:22:22.222 (default: None)
+  -v, --verbose         display verbose messages (default: False)
   -a, --accurate        Make accurate captures. This capture mode is way
                         slower than the default one but it helps when
-                        capturing frames from HEVC videos.
+                        capturing frames from HEVC videos. (default: False)
   -A ACCURATE_DELAY_SECONDS, --accurate-delay-seconds ACCURATE_DELAY_SECONDS
                         Fast skip to N seconds before capture time, then do
                         accurate capture (decodes N seconds of video before
-                        each capture). This is used with accurate caputre mode
-                        only.
+                        each capture). This is used with accurate capture mode
+                        only. (default: 1)
   --metadata-margin METADATA_MARGIN
-                        Margin (in pixels) in the metadata header.
+                        Margin (in pixels) in the metadata header. (default:
+                        10)
+  --metadata-horizontal-margin METADATA_HORIZONTAL_MARGIN
+                        Horizontal margin (in pixels) in the metadata header.
+                        (default: 10)
+  --metadata-vertical-margin METADATA_VERTICAL_MARGIN
+                        Vertical margin (in pixels) in the metadata header.
+                        (default: 10)
+  --timestamp-horizontal-padding TIMESTAMP_HORIZONTAL_PADDING
+                        Horizontal padding (in pixels) for timestamps.
+                        (default: 3)
+  --timestamp-vertical-padding TIMESTAMP_VERTICAL_PADDING
+                        Vertical padding (in pixels) for timestamps. (default:
+                        1)
+  --timestamp-horizontal-margin TIMESTAMP_HORIZONTAL_MARGIN
+                        Horizontal margin (in pixels) for timestamps.
+                        (default: 5)
+  --timestamp-vertical-margin TIMESTAMP_VERTICAL_MARGIN
+                        Vertical margin (in pixels) for timestamps. (default:
+                        5)
+  --quality IMAGE_QUALITY
+                        Output image quality. Must be an integer in the range
+                        0-100. 100 = best quality. (default: 100)
+  -f IMAGE_FORMAT, --format IMAGE_FORMAT
+                        Output image format. Can be any format supported by
+                        pillow. For example 'png' or 'jpg'. (default: jpg)
+  -T TIMESTAMP_POSITION, --timestamp-position TIMESTAMP_POSITION
+                        Timestamp position. Must be one of ['north', 'south',
+                        'east', 'west', 'ne', 'nw', 'se', 'sw', 'center'].
+                        (default: TimestampPosition.se)
   -r, --recursive       Process every file in the specified directory
-                        recursively.
+                        recursively. (default: False)
+  --timestamp-border-mode
+                        Draw timestamp text with a border instead of the
+                        default rectangle. (default: False)
+  --timestamp-border-size TIMESTAMP_BORDER_SIZE
+                        Size of the timestamp border in pixels (used only with
+                        --timestamp-border-mode). (default: 1)
   --capture-alpha CAPTURE_ALPHA
                         Alpha channel value for the captures (transparency in
-                        range [0, 255]). Defaults to 255 (opaque)
+                        range [0, 255]). Defaults to 255 (opaque) (default:
+                        255)
   --version             show program's version number and exit
   --list-template-attributes
+  --frame-type FRAME_TYPE
+                        Frame type passed to ffmpeg
+                        'select=eq(pict_type,FRAME_TYPE)' filter. Should be
+                        one of ('I', 'B', 'P') or the special type 'key' which
+                        will use the 'select=key' filter instead. (default:
+                        None)
+  --interval INTERVAL   Capture frames at specified interval. Interval format
+                        is any string supported by `parsedatetime`. For
+                        example '5m', '3 minutes 5 seconds', '1 hour 15 min
+                        and 20 sec' etc. (default: None)
+  --ignore-errors       Ignore any error encountered while processing files
+                        recursively and continue to the next file. (default:
+                        False)
 
 ```
 
