@@ -68,6 +68,7 @@ Python modules:
 * pillow
 * jinja2
 * texttable
+* parsedatetime
 
 
 Must be in your PATH:
