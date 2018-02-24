@@ -8,6 +8,7 @@ from __future__ import print_function
 import os
 import subprocess
 import sys
+import datetime
 
 try:
     from subprocess import DEVNULL
@@ -26,6 +27,7 @@ from PIL import Image, ImageDraw, ImageFont
 import numpy
 from jinja2 import Template
 import texttable
+import parsedatetime
 
 __version__ = "7"
 __author__ = "Nils Amiet"
@@ -80,6 +82,7 @@ DEFAULT_IMAGE_QUALITY = 100
 DEFAULT_IMAGE_FORMAT = "jpg"
 DEFAULT_TIMESTAMP_POSITION = TimestampPosition.se
 DEFAULT_FRAME_TYPE = None
+DEFAULT_INTERVAL = None
 
 
 class MediaInfo(object):
@@ -494,19 +497,28 @@ def grid_desired_size(
     return media_info.desired_size(width=desired_width)
 
 
-def timestamp_generator(media_info, start_delay_percent, end_delay_percent, num_samples):
+def total_delay_seconds(media_info, args):
+    """Computes the total seconds to skip (beginning + ending).
+    """
+    start_delay_seconds = math.floor(media_info.duration_seconds * args.start_delay_percent / 100)
+    end_delay_seconds = math.floor(media_info.duration_seconds * args.end_delay_percent / 100)
+    delay = start_delay_seconds + end_delay_seconds
+    return delay
+
+
+def timestamp_generator(media_info, args):
     """Generates `num_samples` uniformly distributed timestamps over time.
     Timestamps will be selected in the range specified by start_delay_percent and end_delay percent.
     For example, `end_delay_percent` can be used to avoid making captures during the ending credits.
     """
-    start_delay_seconds = math.floor(media_info.duration_seconds * start_delay_percent / 100)
-    end_delay_seconds = math.floor(media_info.duration_seconds * end_delay_percent / 100)
-    delay = start_delay_seconds + end_delay_seconds
-    capture_interval = (media_info.duration_seconds - delay) / (num_samples + 1)
-    end = int(media_info.duration_seconds - end_delay_seconds)
+    delay = total_delay_seconds(media_info, args)
+    capture_interval = (media_info.duration_seconds - delay) / (args.num_samples + 1)
+    if args.interval is not None:
+        capture_interval = int(args.interval.total_seconds())
+    start_delay_seconds = math.floor(media_info.duration_seconds * args.start_delay_percent / 100)
     time = start_delay_seconds + capture_interval
 
-    for i in range(num_samples):
+    for i in range(args.num_samples):
         yield (time, MediaInfo.pretty_duration(time, show_millis=True))
         time += capture_interval
 
@@ -534,17 +546,24 @@ def select_sharpest_images(
         args.num_samples = args.num_selected
         num_groups = args.num_selected
 
+    if args.interval is not None:
+        total_delay = total_delay_seconds(media_info, args)
+        selected_duration = media_info.duration_seconds - total_delay
+        args.num_samples = math.floor(selected_duration / args.interval.total_seconds())
+        args.num_selected = args.num_samples
+        num_groups = args.num_samples
+        square_side = math.ceil(math.sqrt(args.num_samples))
+        args.grid = Grid(square_side, square_side)
+
     desired_size = grid_desired_size(
         args.grid,
         media_info,
         width=args.vcs_width,
         horizontal_margin=args.grid_horizontal_spacing)
     blurs = []
+
     if args.manual_timestamps is None:
-        timestamps = timestamp_generator(media_info,
-                                         args.start_delay_percent,
-                                         args.end_delay_percent,
-                                         args.num_samples)
+        timestamps = timestamp_generator(media_info, args)
     else:
         timestamps = [(MediaInfo.pretty_to_seconds(x), x) for x in args.manual_timestamps]
 
@@ -760,6 +779,7 @@ def compose_contact_sheet(
     """Creates a video contact sheet with the media information in a header
     and the selected frames arranged on a mxn grid with optional timestamps
     """
+    print(args.grid)
     desired_size = grid_desired_size(
         args.grid,
         media_info,
@@ -1029,6 +1049,24 @@ def timestamp_position_type(string):
         raise argparse.ArgumentTypeError(error)
 
 
+def interval_type(string):
+    """Type parser for argparse. Argument must be a valid interval format.
+    Supports any format supported by `parsedatetime`, including:
+        * "30sec" (every 30 seconds)
+        * "5 minutes" (every 5 minutes)
+        * "1h" (every hour)
+        * "2 hours 1 min and 30 seconds"
+    """
+    m = datetime.datetime.min
+    cal = parsedatetime.Calendar()
+    interval = cal.parseDT(string, sourceTime=m)[0] - m
+    if interval == m:
+        error = "Invalid interval format: {}".format(string)
+        raise argparse.ArgumentTypeError(error)
+
+    return interval
+
+
 def error(message):
     """Print an error message."""
     print("[ERROR] %s" % (message,))
@@ -1292,6 +1330,12 @@ def main():
         default=DEFAULT_FRAME_TYPE,
         help="Frame type passed to ffmpeg 'select=eq(pict_type,FRAME_TYPE)' filter. Should be one of ('I', 'B', 'P') or the special type 'key' which will use the 'select=key' filter instead.",
         dest="frame_type")
+    parser.add_argument(
+        "--interval",
+        type=interval_type,
+        default=DEFAULT_INTERVAL,
+        help="Capture frames at specified interval. Interval format is any string supported by `parsedatetime`. For example '5m', '3 minutes 5 seconds', '1 hour 15 min and 20 sec' etc.",
+        dest="interval")
     parser.add_argument(
         "--ignore-errors",
         action="store_true",

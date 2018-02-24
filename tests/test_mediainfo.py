@@ -1,4 +1,5 @@
 import json
+import argparse
 
 from nose.tools import assert_raises
 from nose.tools import assert_equals
@@ -86,8 +87,14 @@ def test_timestamps():
     interval = mi.duration_seconds - (start_delay_percent + end_delay_percent)
     num_samples = interval - 1
 
+    args = argparse.Namespace()
+    args.interval = None
+    args.num_samples = num_samples
+    args.start_delay_percent = start_delay_percent
+    args.end_delay_percent = end_delay_percent
+
     expected_timestamp = start_delay_percent + 1
-    for t in timestamp_generator(mi, 7, 7, 85):
+    for t in timestamp_generator(mi, args):
         assert_equals(int(t[0]), expected_timestamp)
         expected_timestamp += 1
 
