@@ -553,7 +553,8 @@ def select_sharpest_images(
         args.num_selected = args.num_samples
         num_groups = args.num_samples
         square_side = math.ceil(math.sqrt(args.num_samples))
-        args.grid = Grid(square_side, square_side)
+        if args.grid == DEFAULT_GRID_SIZE:
+            args.grid = Grid(square_side, square_side)
 
     desired_size = grid_desired_size(
         args.grid,
@@ -779,7 +780,6 @@ def compose_contact_sheet(
     """Creates a video contact sheet with the media information in a header
     and the selected frames arranged on a mxn grid with optional timestamps
     """
-    print(args.grid)
     desired_size = grid_desired_size(
         args.grid,
         media_info,

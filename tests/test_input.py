@@ -2,6 +2,7 @@ from argparse import ArgumentTypeError
 
 from nose.tools import assert_raises
 from nose.tools import assert_equals
+from nose.tools import assert_not_equals
 
 from vcsi.vcsi import Grid, mxn_type
 
@@ -12,6 +13,16 @@ def test_grid_default():
     assert_equals(test_grid.x, 4)
     assert_equals(test_grid.y, 4)
 
+
+def test_grid_equality():
+    g1 = Grid(4, 4)
+    g2 = Grid(4, 4)
+    assert_equals(g1, g2)
+
+def test_grid_inequality():
+    g1 = Grid(4, 4)
+    g2 = Grid(3, 4)
+    assert_not_equals(g1, g2)
 
 def test_grid_columns_integer():
     assert_raises(ArgumentTypeError, mxn_type, 'ax4')
