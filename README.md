@@ -40,6 +40,7 @@ vcsi is currently packaged for the following systems:
 | -------------- | --- |
 | Arch (AUR) | https://aur.archlinux.org/packages/vcsi/ |
 | Arch (AUR, git master) | https://aur.archlinux.org/packages/vcsi-git/ |
+| Gentoo | https://packages.gentoo.org/packages/media-video/vcsi |
 
 Your system is not listed?
 
