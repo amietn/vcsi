@@ -1,7 +1,7 @@
 # vcsi
 
 [![Build Status](https://travis-ci.org/amietn/vcsi.svg?branch=master)](https://travis-ci.org/amietn/vcsi)
-[![Coverage Status](https://coveralls.io/repos/amietn/vcsi/badge.svg)](https://coveralls.io/r/amietn/vcsi)
+[![Coverage Status](https://coveralls.io/repos/github/amietn/vcsi/badge.svg?branch=master)](https://coveralls.io/github/amietn/vcsi?branch=master)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](http://opensource.org/licenses/MIT)
 
 Create video contact sheets. A video contact sheet is an image composed of video capture thumbnails arranged on a grid.
