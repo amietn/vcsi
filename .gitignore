@@ -8,3 +8,6 @@ __pycache__
 /cover
 *.pyc
 /.idea
+/build
+/dist
+/vcsi.egg-info

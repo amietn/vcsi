@@ -28,7 +28,7 @@ setup(
 
     # Author details
     author='Nils Amiet',
-    author_email='amietn@foobar',
+    author_email='amietn@foobar.tld',
 
     # Choose your license
     license='MIT',
