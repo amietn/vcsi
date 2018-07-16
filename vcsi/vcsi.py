@@ -940,9 +940,6 @@ def compose_contact_sheet(
 def save_image(args, image, media_info, output_path):
     """Save the image to `output_path`
     """
-    if not output_path:
-        output_path = media_info.filename + "." + args.image_format
-
     image = image.convert("RGB")
     try:
         image.save(output_path, optimize=True, quality=args.image_quality)
@@ -1341,6 +1338,12 @@ def main():
         action="store_true",
         help="Ignore any error encountered while processing files recursively and continue to the next file.",
         dest="ignore_errors")
+    parser.add_argument(
+        "--no-overwrite",
+        action="store_true",
+        help="Do not overwrite output file if it already exists, simply ignore this file and continue processing other unprocessed files.",
+        dest="no_overwrite"
+    )
 
     args = parser.parse_args()
 
@@ -1380,8 +1383,6 @@ def process_file(path, args):
     """
     print("Processing %s..." % (path))
 
-    output_path = args.output_path
-
     media_info = MediaInfo(
         path,
         verbose=args.is_verbose)
@@ -1391,6 +1392,16 @@ def process_file(path, args):
         skip_delay_seconds=args.accurate_delay_seconds,
         frame_type=args.frame_type
     )
+
+    output_path = args.output_path
+    if not output_path:
+        output_path = media_info.filename + "." + args.image_format
+
+    if args.no_overwrite:
+        if os.path.exists(output_path):
+            print("[WARN] Output file already exists, skipping: {}".format(output_path))
+            return
+
 
     # metadata margins
     if not args.metadata_margin == DEFAULT_METADATA_MARGIN:
