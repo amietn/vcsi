@@ -34,6 +34,14 @@ The above contact sheets were generated from a movie called "Big Buck Bunny".
 
 ## Installation
 
+### PyPi
+
+```
+$ pip install vcsi
+```
+
+### Distribution packages
+
 vcsi is currently packaged for the following systems:
 
 | Linux packages | |
