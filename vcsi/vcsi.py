@@ -116,8 +116,12 @@ class MediaInfo(object):
             path
         ]
 
-        output = subprocess.check_output(ffprobe_command)
-        self.ffprobe_dict = json.loads(output.decode("utf-8"))
+        try:
+            output = subprocess.check_output(ffprobe_command)
+            self.ffprobe_dict = json.loads(output.decode("utf-8"))
+        except FileNotFoundError:
+            error = "Could not find 'ffprobe' executable. Please make sure ffmpeg/ffprobe is installed and is in your PATH."
+            error_exit(error)
 
     def human_readable_size(self, num, suffix='B'):
         """Converts a number of bytes to a human readable format
@@ -423,7 +427,11 @@ class MediaCapture(object):
                     out_path
                 ]
 
-        subprocess.call(ffmpeg_command, stderr=DEVNULL, stdout=DEVNULL)
+        try:
+            subprocess.call(ffmpeg_command, stderr=DEVNULL, stdout=DEVNULL)
+        except FileNotFoundError:
+            error = "Could not find 'ffmpeg' executable. Please make sure ffmpeg/ffprobe is installed and is in your PATH."
+            error_exit(error)
 
     def compute_avg_color(self, image_path):
         """Computes the average color of an image
