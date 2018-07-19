@@ -1389,7 +1389,15 @@ def main():
 def process_file(path, args):
     """Generate a video contact sheet for the file at given path
     """
-    print("Processing %s..." % (path))
+    if not os.path.exists(path):
+        if args.ignore_errors:
+            print("File does not exist, skipping: {}".format(path))
+            return
+        else:
+            error_message = "File does not exist: {}".format(path)
+            error_exit(error_message)
+
+    print("Processing {}...".format(path))
 
     media_info = MediaInfo(
         path,
