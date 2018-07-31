@@ -161,7 +161,11 @@ class MediaInfo(object):
         """
         self.sample_width = int(self.video_stream["width"])
         self.sample_height = int(self.video_stream["height"])
-        sample_aspect_ratio = self.video_stream["sample_aspect_ratio"]
+        sample_aspect_ratio = "1:1"
+        try:
+            sample_aspect_ratio = self.video_stream["sample_aspect_ratio"]
+        except KeyError:
+            pass
 
         if sample_aspect_ratio == "1:1":
             self.display_width = self.sample_width
