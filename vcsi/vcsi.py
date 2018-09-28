@@ -256,8 +256,8 @@ class MediaInfo(object):
         Returns (width, height)
         """
         ratio = width / float(self.display_width)
-        desired_height = math.floor(self.display_height * ratio)
-        return (int(width), int(desired_height))
+        desired_height = int(math.floor(self.display_height * ratio))
+        return (width, desired_height)
 
     def parse_attributes(self):
         """Parse multiple media attributes
@@ -502,6 +502,7 @@ def grid_desired_size(
     Returns (width, height)
     """
     desired_width = (width - (grid.x - 1) * horizontal_margin) / grid.x
+    desired_width = int(math.floor(desired_width))
 
     return media_info.desired_size(width=desired_width)
 
