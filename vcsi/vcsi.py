@@ -501,10 +501,7 @@ def grid_desired_size(
     """Computes the size of the images placed on a mxn grid with given fixed width.
     Returns (width, height)
     """
-    if grid:
-        desired_width = (width - (grid.x - 1) * horizontal_margin) / grid.x
-    else:
-        desired_width = width
+    desired_width = (width - (grid.x - 1) * horizontal_margin) / grid.x
 
     return media_info.desired_size(width=desired_width)
 
