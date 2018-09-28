@@ -797,6 +797,7 @@ def compose_contact_sheet(
         media_info,
         width=args.vcs_width,
         horizontal_margin=args.grid_horizontal_spacing)
+    width = args.grid.x * (desired_size[0] + args.grid_horizontal_spacing) - args.grid_horizontal_spacing
     height = args.grid.y * (desired_size[1] + args.grid_vertical_spacing) - args.grid_vertical_spacing
 
     try:
@@ -818,7 +819,7 @@ def compose_contact_sheet(
         media_info,
         header_font,
         args.metadata_horizontal_margin,
-        args.vcs_width,
+        width,
         template_path=args.metadata_template_path)
 
     line_spacing_coefficient = 1.2
@@ -828,7 +829,7 @@ def compose_contact_sheet(
     if args.metadata_position == "hidden":
         header_height = 0
 
-    final_image_width = args.vcs_width
+    final_image_width = width
     final_image_height = height + header_height
     transparent = (255, 255, 255, 0)
 
