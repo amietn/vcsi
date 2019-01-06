@@ -256,8 +256,8 @@ class MediaInfo(object):
         Returns (width, height)
         """
         ratio = width / float(self.display_width)
-        desired_height = math.floor(self.display_height * ratio)
-        return (int(width), int(desired_height))
+        desired_height = int(math.floor(self.display_height * ratio))
+        return (width, desired_height)
 
     def parse_attributes(self):
         """Parse multiple media attributes
@@ -501,10 +501,8 @@ def grid_desired_size(
     """Computes the size of the images placed on a mxn grid with given fixed width.
     Returns (width, height)
     """
-    if grid:
-        desired_width = (width - (grid.x - 1) * horizontal_margin) / grid.x
-    else:
-        desired_width = width
+    desired_width = (width - (grid.x - 1) * horizontal_margin) / grid.x
+    desired_width = int(math.floor(desired_width))
 
     return media_info.desired_size(width=desired_width)
 
@@ -797,6 +795,7 @@ def compose_contact_sheet(
         media_info,
         width=args.vcs_width,
         horizontal_margin=args.grid_horizontal_spacing)
+    width = args.grid.x * (desired_size[0] + args.grid_horizontal_spacing) - args.grid_horizontal_spacing
     height = args.grid.y * (desired_size[1] + args.grid_vertical_spacing) - args.grid_vertical_spacing
 
     try:
@@ -818,7 +817,7 @@ def compose_contact_sheet(
         media_info,
         header_font,
         args.metadata_horizontal_margin,
-        args.vcs_width,
+        width,
         template_path=args.metadata_template_path)
 
     line_spacing_coefficient = 1.2
@@ -828,7 +827,7 @@ def compose_contact_sheet(
     if args.metadata_position == "hidden":
         header_height = 0
 
-    final_image_width = args.vcs_width
+    final_image_width = width
     final_image_height = height + header_height
     transparent = (255, 255, 255, 0)
 
