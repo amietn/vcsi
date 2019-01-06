@@ -5,10 +5,10 @@
 
 from __future__ import print_function
 
+import datetime
 import os
 import subprocess
 import sys
-import datetime
 
 try:
     from subprocess import DEVNULL
@@ -32,12 +32,15 @@ import parsedatetime
 __version__ = "7"
 __author__ = "Nils Amiet"
 
+
 class Grid(namedtuple('Grid', ['x', 'y'])):
     def __str__(self):
         return "%sx%s" % (self.x, self.y)
 
+
 class Frame(namedtuple('Frame', ['filename', 'blurriness', 'timestamp', 'avg_color'])):
     pass
+
 
 class Color(namedtuple('Color', ['r', 'g', 'b', 'a'])):
     def to_hex(self, component):
@@ -46,6 +49,7 @@ class Color(namedtuple('Color', ['r', 'g', 'b', 'a'])):
 
     def __str__(self):
         return "".join([self.to_hex(x) for x in [self.r, self.g, self.b, self.a]])
+
 
 TimestampPosition = Enum('TimestampPosition', "north south east west ne nw se sw center")
 VALID_TIMESTAMP_POSITIONS = [x.name for x in TimestampPosition]
@@ -355,7 +359,8 @@ class MediaCapture(object):
     """Capture frames of a video
     """
 
-    def __init__(self, path, accurate=False, skip_delay_seconds=DEFAULT_ACCURATE_DELAY_SECONDS, frame_type=DEFAULT_FRAME_TYPE):
+    def __init__(self, path, accurate=False, skip_delay_seconds=DEFAULT_ACCURATE_DELAY_SECONDS,
+                 frame_type=DEFAULT_FRAME_TYPE):
         self.path = path
         self.accurate = accurate
         self.skip_delay_seconds = skip_delay_seconds
