@@ -1080,6 +1080,14 @@ def interval_type(string):
     return interval
 
 
+def comma_separated_string_type(string):
+    """Type parser for argparse. Argument must be a comma-separated list of strings."""
+    splits = string.split(",")
+    splits = [x.strip() for x in splits]
+    splits = [x for x in splits if len(x) > 0]
+    return splits
+
+
 def error(message):
     """Print an error message."""
     print("[ERROR] %s" % (message,))
@@ -1360,6 +1368,13 @@ def main():
         help="Do not overwrite output file if it already exists, simply ignore this file and continue processing other unprocessed files.",
         dest="no_overwrite"
     )
+    parser.add_argument(
+        "--exclude-extensions",
+        type=comma_separated_string_type,
+        default=[],
+        help="Do not process files that end with the given extensions.",
+        dest="exclude_extensions"
+    )
 
     args = parser.parse_args()
 
@@ -1397,6 +1412,9 @@ def main():
 def process_file(path, args):
     """Generate a video contact sheet for the file at given path
     """
+    if args.is_verbose:
+        print("Considering {}...".format(path))
+
     if not os.path.exists(path):
         if args.ignore_errors:
             print("File does not exist, skipping: {}".format(path))
@@ -1405,7 +1423,9 @@ def process_file(path, args):
             error_message = "File does not exist: {}".format(path)
             error_exit(error_message)
 
-    if path.lower().endswith(args.image_format.lower()):
+    file_extension = path.lower().split(".")[-1]
+    if file_extension in args.exclude_extensions:
+        print("[WARN] Excluded extension {}. Skipping.".format(file_extension))
         return
 
     output_path = args.output_path
