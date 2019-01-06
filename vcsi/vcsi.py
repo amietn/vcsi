@@ -1401,6 +1401,18 @@ def process_file(path, args):
             error_message = "File does not exist: {}".format(path)
             error_exit(error_message)
 
+    if path.lower().endswith(args.image_format.lower()):
+        return
+
+    output_path = args.output_path
+    if not output_path:
+        output_path = path + "." + args.image_format
+
+    if args.no_overwrite:
+        if os.path.exists(output_path):
+            print("[INFO] contact-sheet already exists, skipping: {}".format(output_path))
+            return
+
     print("Processing {}...".format(path))
 
     media_info = MediaInfo(
@@ -1412,16 +1424,6 @@ def process_file(path, args):
         skip_delay_seconds=args.accurate_delay_seconds,
         frame_type=args.frame_type
     )
-
-    output_path = args.output_path
-    if not output_path:
-        output_path = media_info.filename + "." + args.image_format
-
-    if args.no_overwrite:
-        if os.path.exists(output_path):
-            print("[WARN] Output file already exists, skipping: {}".format(output_path))
-            return
-
 
     # metadata margins
     if not args.metadata_margin == DEFAULT_METADATA_MARGIN:
