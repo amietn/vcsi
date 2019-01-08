@@ -1,16 +1,18 @@
-from setuptools import setup, find_packages
-from codecs import open
-from os import path
+import os
 import sys
+from codecs import open
 
-here = path.abspath(path.dirname(__file__))
+from setuptools import setup, find_packages
 
+here = os.path.abspath(os.path.dirname(__file__))
 
-install_requires=['numpy', 'pillow', 'jinja2']
+with open(os.path.join(here, "vcsi", "VERSION")) as f:
+    VERSION = f.readline().strip()
 
-if sys.version_info < (3,4):
+install_requires = ['numpy', 'pillow', 'jinja2']
+
+if sys.version_info < (3, 4):
     install_requires += ['enum34']
-
 
 setup(
     name='vcsi',
@@ -18,7 +20,7 @@ setup(
     # Versions should comply with PEP440.  For a discussion on single-sourcing
     # the version across setup.py and the project code, see
     # https://packaging.python.org/en/latest/single_source_version.html
-    version='7.0.4',
+    version=VERSION,
 
     description='Create video contact sheets, thumbnails, screenshots',
     long_description='',
@@ -63,4 +65,9 @@ setup(
             'vcsi=vcsi:main',
         ],
     },
+
+    # Additional files to install in the package directory
+    data_files=[
+        ("vcsi", ["vcsi/VERSION"])
+    ]
 )

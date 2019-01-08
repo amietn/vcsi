@@ -29,7 +29,11 @@ from jinja2 import Template
 import texttable
 import parsedatetime
 
-__version__ = "7"
+here = os.path.abspath(os.path.dirname(__file__))
+
+with open(os.path.join(here, "VERSION")) as f:
+    VERSION = f.readline().strip()
+__version__ = VERSION
 __author__ = "Nils Amiet"
 
 
