@@ -67,7 +67,7 @@ setup(
     },
 
     # Additional files to install in the package directory
-    data_files=[
-        ("vcsi", ["vcsi/VERSION"])
-    ]
+    package_data={
+        "vcsi": ["VERSION"]
+    }
 )
