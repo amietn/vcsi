@@ -9,6 +9,7 @@ import datetime
 import os
 import subprocess
 import sys
+from concurrent.futures import ThreadPoolExecutor
 
 try:
     from subprocess import DEVNULL
@@ -580,36 +581,67 @@ def select_sharpest_images(
         media_info,
         width=args.vcs_width,
         horizontal_margin=args.grid_horizontal_spacing)
-    blurs = []
 
     if args.manual_timestamps is None:
         timestamps = timestamp_generator(media_info, args)
     else:
         timestamps = [(MediaInfo.pretty_to_seconds(x), x) for x in args.manual_timestamps]
 
-    for i, timestamp in enumerate(timestamps):
-        status = "Sampling... %s/%s" % ((i + 1), args.num_samples)
-        print(status, end="\r")
+    def do_capture(ts_tuple, width, height, suffix, args):
+        fd, filename = tempfile.mkstemp(suffix=suffix)
 
-        fd, filename = tempfile.mkstemp(suffix=".png")
+        media_capture.make_capture(ts_tuple[1], width, height, filename)
 
-        media_capture.make_capture(
-            timestamp[1],
-            desired_size[0],
-            desired_size[1],
-            filename)
-        blurriness = media_capture.compute_blurriness(filename)
-        avg_color = media_capture.compute_avg_color(filename)
+        blurriness = 1
+        avg_color = 0
 
-        blurs += [
-            Frame(
-                filename=filename,
-                blurriness=blurriness,
-                timestamp=timestamp[0],
-                avg_color=avg_color
-            )
-        ]
+        if not args.fast:
+            blurriness = media_capture.compute_blurriness(filename)
+            avg_color = media_capture.compute_avg_color(filename)
+
         os.close(fd)
+        frm = Frame(
+            filename=filename,
+            blurriness=blurriness,
+            timestamp=ts_tuple[0],
+            avg_color=avg_color
+        )
+        return frm
+
+    blurs = []
+    futures = []
+
+    if args.fast:
+        # use multiple threads
+        with ThreadPoolExecutor() as executor:
+            for i, timestamp_tuple in enumerate(timestamps):
+                status = "Starting task... {}/{}".format(i + 1, args.num_samples)
+                print(status, end="\r")
+                suffix = ".jpg"  # faster processing time
+                future = executor.submit(do_capture, timestamp_tuple, desired_size[0], desired_size[1], suffix, args)
+                futures.append(future)
+            print()
+
+            for i, future in enumerate(futures):
+                status = "Sampling... {}/{}".format(i + 1, args.num_samples)
+                print(status, end="\r")
+                frame = future.result()
+                blurs += [
+                    frame
+                ]
+            print()
+    else:
+        # grab captures sequentially
+        for i, timestamp_tuple in enumerate(timestamps):
+            status = "Sampling... {}/{}".format(i + 1, args.num_samples)
+            print(status, end="\r")
+            suffix = ".png"  # arguably higher image quality
+            frame = do_capture(timestamp_tuple, desired_size[0], desired_size[1], suffix, args)
+
+            blurs += [
+                frame
+            ]
+        print()
 
     time_sorted = sorted(blurs, key=lambda x: x.timestamp)
 
@@ -1378,6 +1410,12 @@ def main():
         default=[],
         help="Do not process files that end with the given extensions.",
         dest="exclude_extensions"
+    )
+    parser.add_argument(
+        "--fast",
+        action="store_true",
+        help="Fast mode. Just make a contact sheet as fast as possible, regardless of output image quality. May mess up the terminal.",
+        dest="fast"
     )
 
     args = parser.parse_args()
