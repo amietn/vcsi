@@ -9,7 +9,7 @@ here = os.path.abspath(os.path.dirname(__file__))
 with open(os.path.join(here, "vcsi", "VERSION")) as f:
     VERSION = f.readline().strip()
 
-install_requires = ['numpy', 'pillow', 'jinja2']
+install_requires = ['numpy', 'pillow', 'jinja2', 'texttable', 'parsedatetime']
 
 if sys.version_info < (3, 4):
     install_requires += ['enum34']
