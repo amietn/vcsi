@@ -1498,11 +1498,8 @@ def process_file(path, args):
 
     if args.interval is not None:
         total_delay = total_delay_seconds(media_info, args)
-        print(f"total_delay = {total_delay}")
         selected_duration = media_info.duration_seconds - total_delay
-        print(f"selected_duration = {selected_duration}")
         args.num_samples = math.floor(selected_duration / args.interval.total_seconds())
-        print(f"num_sampled = {args.num_samples}")
         args.num_selected = args.num_samples
         args.num_groups = args.num_samples
 
