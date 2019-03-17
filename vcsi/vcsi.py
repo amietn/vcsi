@@ -1576,6 +1576,7 @@ def process_file(path, args):
             thumbnail_file_extension = frame.filename.lower().split(".")[-1]
             shutil.copyfile(frame.filename, thumbnail_output_path + os.path.basename(path) + '.' + str(i).zfill(4) + '.' + thumbnail_file_extension)
 
+    print("Cleaning up temporary files...")
     cleanup(temp_frames)
 
     if not is_save_successful:
