@@ -533,6 +533,7 @@ def timestamp_generator(media_info, args):
     """
     delay = total_delay_seconds(media_info, args)
     capture_interval = (media_info.duration_seconds - delay) / (args.num_samples + 1)
+
     if args.interval is not None:
         capture_interval = int(args.interval.total_seconds())
     start_delay_seconds = math.floor(media_info.duration_seconds * args.start_delay_percent / 100)
@@ -546,35 +547,10 @@ def timestamp_generator(media_info, args):
 def select_sharpest_images(
         media_info,
         media_capture,
-        args,
-        num_groups=5):
+        args):
     """Make `num_samples` captures and select `num_selected` captures out of these
     based on blurriness and color variety.
     """
-    if num_groups is None:
-        num_groups = args.num_selected
-
-    # make sure num_selected is not too large
-    if args.num_selected > num_groups:
-        num_groups = args.num_selected
-
-    if args.num_selected > args.num_samples:
-        args.num_samples = args.num_selected
-
-    # make sure num_samples is large enough
-    if args.num_samples < args.num_selected or args.num_samples < num_groups:
-        args.num_samples = args.num_selected
-        num_groups = args.num_selected
-
-    if args.interval is not None:
-        total_delay = total_delay_seconds(media_info, args)
-        selected_duration = media_info.duration_seconds - total_delay
-        args.num_samples = math.floor(selected_duration / args.interval.total_seconds())
-        args.num_selected = args.num_samples
-        num_groups = args.num_samples
-        square_side = math.ceil(math.sqrt(args.num_samples))
-        if args.grid == DEFAULT_GRID_SIZE:
-            args.grid = Grid(square_side, square_side)
 
     desired_size = grid_desired_size(
         args.grid,
@@ -646,8 +622,8 @@ def select_sharpest_images(
     time_sorted = sorted(blurs, key=lambda x: x.timestamp)
 
     # group into num_selected groups
-    if num_groups > 1:
-        group_size = int(math.floor(len(time_sorted) / num_groups))
+    if args.num_groups > 1:
+        group_size = max(1, int(math.floor(len(time_sorted) / args.num_groups)))
         groups = chunks(time_sorted, group_size)
 
         # find top sharpest for each group
@@ -1031,9 +1007,9 @@ def mxn_type(string):
         split = string.split("x")
         assert (len(split) == 2)
         m = int(split[0])
-        assert (m > 0)
+        assert (m >= 0)
         n = int(split[1])
-        assert (n > 0)
+        assert (n >= 0)
         return Grid(m, n)
     except (IndexError, ValueError, AssertionError):
         error = "Grid must be of the form mxn, where m is the number of columns and n is the number of rows."
@@ -1189,7 +1165,7 @@ def main():
         default=DEFAULT_CONTACT_SHEET_WIDTH)
     parser.add_argument(
         "-g", "--grid",
-        help="display frames on a mxn grid (for example 4x5)",
+        help="display frames on a mxn grid (for example 4x5). The special value zero (as in 2x0 or 0x5 or 0x0) is only allowed when combined with --interval or with --manual. Zero means that the component should be automatically deduced based on other arguments passed.",
         dest="grid",
         type=mxn_type,
         default=DEFAULT_GRID_SIZE)
@@ -1481,6 +1457,15 @@ def process_file(path, args):
 
     print("Processing {}...".format(path))
 
+    if args.interval is not None and args.manual_timestamps is not None:
+        error_exit("Cannot use --interval and --manual at the same time.")
+
+    if args.delay_percent is not None:
+        args.start_delay_percent = args.delay_percent
+        args.end_delay_percent = args.delay_percent
+
+    args.num_groups = 5
+
     media_info = MediaInfo(
         path,
         verbose=args.is_verbose)
@@ -1496,31 +1481,63 @@ def process_file(path, args):
         args.metadata_horizontal_margin = args.metadata_margin
         args.metadata_vertical_margin = args.metadata_margin
 
-    args.num_selected = args.grid.x * args.grid.y
+    if args.interval is None and args.manual_timestamps is None and (args.grid.x == 0 or args.grid.y == 0):
+        error = "Row or column of size zero is only supported with --interval or --manual."
+        error_exit(error)
+
+    if args.interval is not None:
+        total_delay = total_delay_seconds(media_info, args)
+        print(f"total_delay = {total_delay}")
+        selected_duration = media_info.duration_seconds - total_delay
+        print(f"selected_duration = {selected_duration}")
+        args.num_samples = math.floor(selected_duration / args.interval.total_seconds())
+        print(f"num_sampled = {args.num_samples}")
+        args.num_selected = args.num_samples
+        args.num_groups = args.num_samples
 
     # manual frame selection
     if args.manual_timestamps is not None:
         mframes_size = len(args.manual_timestamps)
-        grid_size = args.grid.x * args.grid.y
 
         args.num_selected = mframes_size
         args.num_samples = mframes_size
+        args.num_groups = mframes_size
 
-        if not mframes_size == grid_size:
-            # specified number of columns
-            y = math.ceil(mframes_size / args.grid.x)
+    if args.interval is not None or args.manual_timestamps is not None:
+        square_side = math.ceil(math.sqrt(args.num_samples))
+
+        if args.grid == DEFAULT_GRID_SIZE:
+            args.grid = Grid(square_side, square_side)
+        elif args.grid.x == 0 and args.grid.y == 0:
+            args.grid = Grid(square_side, square_side)
+        elif args.grid.x == 0:
+            # y is fixed
+            x = math.ceil(args.num_samples / args.grid.y)
+            args.grid = Grid(x, args.grid.y)
+        elif args.grid.y == 0:
+            # x is fixed
+            y = math.ceil(args.num_samples / args.grid.x)
             args.grid = Grid(args.grid.x, y)
 
-    if args.num_selected < 1:
-        error = "One of --grid, --manual must be specified"
-        raise argparse.ArgumentTypeError(error)
-
+    args.num_selected = args.grid.x * args.grid.y
     if args.num_samples is None:
         args.num_samples = args.num_selected
 
-    if args.delay_percent is not None:
-        args.start_delay_percent = args.delay_percent
-        args.end_delay_percent = args.delay_percent
+    if args.num_groups is None:
+        args.num_groups = args.num_selected
+
+    # make sure num_selected is not too large
+    if args.interval is None and args.manual_timestamps is None:
+        if args.num_selected > args.num_groups:
+            args.num_groups = args.num_selected
+
+        if args.num_selected > args.num_samples:
+            args.num_samples = args.num_selected
+
+        # make sure num_samples is large enough
+        if args.num_samples < args.num_selected or args.num_samples < args.num_groups:
+            args.num_samples = args.num_selected
+            args.num_groups = args.num_selected
 
     if args.grid_spacing is not None:
         args.grid_horizontal_spacing = args.grid_spacing
