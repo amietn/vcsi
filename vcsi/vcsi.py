@@ -170,6 +170,17 @@ class MediaInfo(object):
         """
         self.sample_width = int(self.video_stream["width"])
         self.sample_height = int(self.video_stream["height"])
+
+        # videos recorded with a smartphone may have a "rotate" flag
+        try:
+            rotation = int(self.video_stream["tags"]["rotate"])
+        except KeyError:
+            rotation = None
+
+        if rotation == 90:
+            # swap width and height
+            self.sample_width, self.sample_height = self.sample_height, self.sample_width
+
         sample_aspect_ratio = "1:1"
         try:
             sample_aspect_ratio = self.video_stream["sample_aspect_ratio"]
