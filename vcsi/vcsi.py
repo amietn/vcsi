@@ -9,6 +9,7 @@ import datetime
 import os
 import subprocess
 import sys
+import shutil
 from concurrent.futures import ThreadPoolExecutor
 
 try:
@@ -1402,7 +1403,12 @@ def main():
         "--fast",
         action="store_true",
         help="Fast mode. Just make a contact sheet as fast as possible, regardless of output image quality. May mess up the terminal.",
-        dest="fast"
+        dest="fast")
+    parser.add_argument(
+        "-to", "--thumbnail_output",
+        help="Save thumbnail files to output directory. If set, the thumbnail files will not be deleted after successful creation of the contact sheet.",
+        default="",
+        dest="thumbnail_output_path"
     )
 
     args = parser.parse_args()
@@ -1557,6 +1563,15 @@ def process_file(path, args):
     image = compose_contact_sheet(media_info, selected_frames, args)
 
     is_save_successful = save_image(args, image, media_info, output_path)
+
+    # save selected frames of the contact sheet to the predefined location in thumbnail_output_path
+    thumbnail_output_path = args.thumbnail_output_path
+    if thumbnail_output_path != "" and os.path.isdir(thumbnail_output_path):
+        print("Copy thumbnails...")
+        for i, frame in enumerate(selected_frames):
+            print(frame.filename)
+            thumbnail_file_extension = frame.filename.lower().split(".")[-1]
+            shutil.copyfile(frame.filename, thumbnail_output_path + os.path.basename(path) + '.' + str(i).zfill(4) + '.' + thumbnail_file_extension)
 
     print("Cleaning up temporary files...")
     cleanup(temp_frames)
