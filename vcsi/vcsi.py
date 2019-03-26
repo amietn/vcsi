@@ -827,15 +827,17 @@ def compose_contact_sheet(
     width = args.grid.x * (desired_size[0] + args.grid_horizontal_spacing) - args.grid_horizontal_spacing
     height = args.grid.y * (desired_size[1] + args.grid_vertical_spacing) - args.grid_vertical_spacing
 
+    encoding = "unic"
+
     try:
-        header_font = ImageFont.truetype(args.metadata_font, args.metadata_font_size)
+        header_font = ImageFont.truetype(args.metadata_font, args.metadata_font_size, encoding=encoding)
     except OSError:
         if args.metadata_font == DEFAULT_METADATA_FONT:
             header_font = ImageFont.load_default()
         else:
             raise
     try:
-        timestamp_font = ImageFont.truetype(args.timestamp_font, args.timestamp_font_size)
+        timestamp_font = ImageFont.truetype(args.timestamp_font, args.timestamp_font_size, encoding=encoding)
     except OSError:
         if args.timestamp_font == DEFAULT_TIMESTAMP_FONT:
             timestamp_font = ImageFont.load_default()
