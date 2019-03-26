@@ -1410,6 +1410,12 @@ def main():
         default=None,
         dest="thumbnail_output_path"
     )
+    parser.add_argument(
+        "-S", "--actual-size",
+        help="Make thumbnails of actual size. In other words, thumbnails will have the actual 1:1 size of the video resolution.",
+        action="store_true",
+        dest="actual_size"
+    )
 
     args = parser.parse_args()
 
@@ -1476,6 +1482,9 @@ def process_file(path, args):
 
     if args.interval is not None and args.manual_timestamps is not None:
         error_exit("Cannot use --interval and --manual at the same time.")
+
+    if args.vcs_width != DEFAULT_CONTACT_SHEET_WIDTH and args.actual_size:
+        error_exit("Cannot use --width and --actual-size at the same time.")
 
     if args.delay_percent is not None:
         args.start_delay_percent = args.delay_percent
@@ -1556,6 +1565,11 @@ def process_file(path, args):
     if args.grid_spacing is not None:
         args.grid_horizontal_spacing = args.grid_spacing
         args.grid_vertical_spacing = args.grid_spacing
+
+    if args.actual_size:
+        x = args.grid.x
+        width = media_info.display_width
+        args.vcs_width = x * width + (x - 1) * args.grid_horizontal_spacing
 
     selected_frames, temp_frames = select_sharpest_images(media_info, media_capture, args)
 
