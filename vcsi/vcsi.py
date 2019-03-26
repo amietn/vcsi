@@ -7,9 +7,9 @@ from __future__ import print_function
 
 import datetime
 import os
+import shutil
 import subprocess
 import sys
-import shutil
 from concurrent.futures import ThreadPoolExecutor
 
 try:
@@ -1405,9 +1405,9 @@ def main():
         help="Fast mode. Just make a contact sheet as fast as possible, regardless of output image quality. May mess up the terminal.",
         dest="fast")
     parser.add_argument(
-        "-to", "--thumbnail_output",
-        help="Save thumbnail files to output directory. If set, the thumbnail files will not be deleted after successful creation of the contact sheet.",
-        default="",
+        "-O", "--thumbnail-output",
+        help="Save thumbnail files to the specified output directory. If set, the thumbnail files will not be deleted after successful creation of the contact sheet.",
+        default=None,
         dest="thumbnail_output_path"
     )
 
@@ -1566,12 +1566,17 @@ def process_file(path, args):
 
     # save selected frames of the contact sheet to the predefined location in thumbnail_output_path
     thumbnail_output_path = args.thumbnail_output_path
-    if thumbnail_output_path != "" and os.path.isdir(thumbnail_output_path):
-        print("Copy thumbnails...")
+    if thumbnail_output_path is not None:
+        os.makedirs(thumbnail_output_path, exist_ok=True)
+        print("Copying thumbnails to {} ...".format(thumbnail_output_path))
         for i, frame in enumerate(selected_frames):
             print(frame.filename)
             thumbnail_file_extension = frame.filename.lower().split(".")[-1]
-            shutil.copyfile(frame.filename, thumbnail_output_path + os.path.basename(path) + '.' + str(i).zfill(4) + '.' + thumbnail_file_extension)
+            thumbnail_filename = "{filename}.{number}.{extension}".format(filename=os.path.basename(path),
+                                                                          number=str(i).zfill(4),
+                                                                          extension=thumbnail_file_extension)
+            thumbnail_destination = os.path.join(thumbnail_output_path, thumbnail_filename)
+            shutil.copyfile(frame.filename, thumbnail_destination)
 
     print("Cleaning up temporary files...")
     cleanup(temp_frames)
