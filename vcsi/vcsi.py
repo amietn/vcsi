@@ -24,6 +24,7 @@ import textwrap
 from collections import namedtuple
 from enum import Enum
 from glob import glob
+from glob import escape
 
 from PIL import Image, ImageDraw, ImageFont
 import numpy
@@ -1445,7 +1446,7 @@ def main():
                     if not os.path.isdir(abs_filepath):
                         process_file(abs_filepath, args)
             else:
-                files_to_process = glob(path)
+                files_to_process = glob(escape(path))
                 if len(files_to_process) == 0:
                     files_to_process = [path]
                 for filename in files_to_process:
