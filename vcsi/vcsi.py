@@ -11,6 +11,7 @@ import shutil
 import subprocess
 import sys
 from concurrent.futures import ThreadPoolExecutor
+from copy import deepcopy
 
 try:
     from subprocess import DEVNULL
@@ -1458,6 +1459,8 @@ def process_file(path, args):
     """
     if args.is_verbose:
         print("Considering {}...".format(path))
+
+    args = deepcopy(args)
 
     if not os.path.exists(path):
         if args.ignore_errors:
