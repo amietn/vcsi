@@ -66,6 +66,9 @@ DEFAULT_METADATA_FONT_SIZE = 16
 DEFAULT_METADATA_FONT = "/usr/share/fonts/TTF/DejaVuSans-Bold.ttf"
 DEFAULT_TIMESTAMP_FONT_SIZE = 12
 DEFAULT_TIMESTAMP_FONT = "/usr/share/fonts/TTF/DejaVuSans.ttf"
+FALLBACK_FONTS = [
+    "/Library/Fonts/Arial Unicode.ttf"
+]
 DEFAULT_CONTACT_SHEET_WIDTH = 1500
 DEFAULT_DELAY_PERCENT = None
 DEFAULT_START_DELAY_PERCENT = 7
@@ -814,6 +817,30 @@ def compute_timestamp_position(args, w, h, text_size, desired_size, rectangle_hp
     return upper_left, bottom_right
 
 
+def load_font(args, font_path, font_size, default_font_path):
+    """Loads given font and defaults to fallback fonts if that fails."""
+    if args.is_verbose:
+        print("Loading font...")
+
+    fonts = [font_path] + FALLBACK_FONTS
+    if font_path == default_font_path:
+        for font in fonts:
+            if args.is_verbose:
+                print("Trying to load font:", font)
+            if os.path.exists(font):
+                try:
+                    return ImageFont.truetype(font, font_size)
+                except OSError:
+                    pass
+        print("Falling back to default font.")
+        return ImageFont.load_default()
+    else:
+        try:
+            return ImageFont.truetype(font_path, font_size)
+        except OSError:
+            error_exit("Cannot load font: {}".format(font_path))
+
+
 def compose_contact_sheet(
         media_info,
         frames,
@@ -829,22 +856,8 @@ def compose_contact_sheet(
     width = args.grid.x * (desired_size[0] + args.grid_horizontal_spacing) - args.grid_horizontal_spacing
     height = args.grid.y * (desired_size[1] + args.grid_vertical_spacing) - args.grid_vertical_spacing
 
-    encoding = "unic"
-
-    try:
-        header_font = ImageFont.truetype(args.metadata_font, args.metadata_font_size, encoding=encoding)
-    except OSError:
-        if args.metadata_font == DEFAULT_METADATA_FONT:
-            header_font = ImageFont.load_default()
-        else:
-            raise
-    try:
-        timestamp_font = ImageFont.truetype(args.timestamp_font, args.timestamp_font_size, encoding=encoding)
-    except OSError:
-        if args.timestamp_font == DEFAULT_TIMESTAMP_FONT:
-            timestamp_font = ImageFont.load_default()
-        else:
-            raise
+    header_font = load_font(args, args.metadata_font, args.metadata_font_size, DEFAULT_METADATA_FONT)
+    timestamp_font = load_font(args, args.timestamp_font, args.timestamp_font_size, DEFAULT_TIMESTAMP_FONT)
 
     header_lines = prepare_metadata_text_lines(
         media_info,
