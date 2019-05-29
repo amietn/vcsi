@@ -1491,6 +1491,8 @@ def process_file(path, args):
     output_path = args.output_path
     if not output_path:
         output_path = path + "." + args.image_format
+    elif os.path.isdir(output_path):
+        output_path = os.path.join(output_path, os.path.basename(path) + "." + args.image_format)
 
     if args.no_overwrite:
         if os.path.exists(output_path):
