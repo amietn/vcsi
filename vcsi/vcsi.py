@@ -283,6 +283,26 @@ class MediaInfo(object):
 
         return duration
 
+    @staticmethod
+    def parse_duration(seconds):
+        hours = int(math.floor(seconds / 3600))
+        remaining_seconds = seconds - 3600 * hours
+
+        minutes = math.floor(remaining_seconds / 60)
+        remaining_seconds = remaining_seconds - 60 * minutes
+        seconds = math.floor(remaining_seconds)
+
+        millis = math.floor((remaining_seconds - math.floor(remaining_seconds)) * 1000)
+        centis = math.floor((remaining_seconds - math.floor(remaining_seconds)) * 100)
+
+        return {
+            "hours": hours,
+            "minutes": minutes,
+            "seconds": seconds,
+            "centis": centis,
+            "millis": millis
+        }
+
     def desired_size(self, width=DEFAULT_CONTACT_SHEET_WIDTH):
         """Computes the height based on a given width and fixed aspect ratio.
         Returns (width, height)
@@ -920,8 +940,27 @@ def compose_contact_sheet(
 
         # show timestamp
         if args.show_timestamp:
-            pretty_timestamp = MediaInfo.pretty_duration(frame.timestamp, show_centis=True)
-            text_size = timestamp_font.getsize(pretty_timestamp)
+            timestamp_time = MediaInfo.pretty_duration(frame.timestamp, show_centis=True)
+            timestamp_duration = MediaInfo.pretty_duration(media_info.duration_seconds, show_centis=True)
+            parsed_time = MediaInfo.parse_duration(frame.timestamp)
+            parsed_duration = MediaInfo.parse_duration(media_info.duration_seconds)
+            timestamp_args = {
+                "TIME": timestamp_time,
+                "DURATION": timestamp_duration,
+                "THUMBNAIL_NUMBER": i + 1,
+                "H": str(parsed_time["hours"]).zfill(2),
+                "M": str(parsed_time["minutes"]).zfill(2),
+                "S": str(parsed_time["seconds"]).zfill(2),
+                "c": str(parsed_time["centis"]).zfill(2),
+                "m": str(parsed_time["millis"]).zfill(3),
+                "dH": str(parsed_duration["hours"]).zfill(2),
+                "dM": str(parsed_duration["minutes"]).zfill(2),
+                "dS": str(parsed_duration["seconds"]).zfill(2),
+                "dc": str(parsed_duration["centis"]).zfill(2),
+                "dm": str(parsed_duration["millis"]).zfill(3)
+            }
+            timestamp_text = args.timestamp_format.format(**timestamp_args)
+            text_size = timestamp_font.getsize(timestamp_text)
 
             # draw rectangle
             rectangle_hpadding = args.timestamp_horizontal_padding
@@ -959,7 +998,7 @@ def compose_contact_sheet(
                             upper_left[0] + rectangle_hpadding + offset[0],
                             upper_left[1] + rectangle_vpadding + offset[1]
                         ),
-                        pretty_timestamp,
+                        timestamp_text,
                         font=timestamp_font,
                         fill=args.timestamp_border_color
                     )
@@ -970,7 +1009,7 @@ def compose_contact_sheet(
                     upper_left[0] + rectangle_hpadding,
                     upper_left[1] + rectangle_vpadding
                 ),
-                pretty_timestamp,
+                timestamp_text,
                 font=timestamp_font,
                 fill=args.timestamp_font_color
             )
@@ -1438,6 +1477,12 @@ def main():
         help="Make thumbnails of actual size. In other words, thumbnails will have the actual 1:1 size of the video resolution.",
         action="store_true",
         dest="actual_size"
+    )
+    parser.add_argument(
+        "--timestamp-format",
+        help="Use specified timestamp format. Replaced values include: {TIME}, {DURATION}, {THUMBNAIL_NUMBER}, {H} (hours), {M} (minutes), {S} (seconds), {c} (centiseconds), {m} (milliseconds), {dH}, {dM}, {dS}, {dc} and {dm} (same as previous values but for the total duration). Example format: '{TIME} / {DURATION}'. Another example: '{THUMBNAIL_NUMBER}'. Yet another example: '{H}:{M}:{S}.{m} / {dH}:{dM}:{dS}.{dm}'.",
+        default="{TIME}",
+        dest="timestamp_format"
     )
 
     args = parser.parse_args()
