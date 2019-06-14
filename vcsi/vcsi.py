@@ -215,7 +215,13 @@ class MediaInfo(object):
         """
         format_dict = self.ffprobe_dict["format"]
 
-        self.duration_seconds = float(format_dict["duration"])
+        try:
+            # try getting video stream duration first
+            self.duration_seconds = float(self.video_stream["duration"])
+        except (KeyError, AttributeError):
+            # otherwise fallback to format duration
+            self.duration_seconds = float(format_dict["duration"])
+
         self.duration = MediaInfo.pretty_duration(self.duration_seconds)
 
         self.filename = os.path.basename(format_dict["filename"])
