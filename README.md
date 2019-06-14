@@ -16,7 +16,8 @@ $ vcsi bbb_sunflower_2160p_60fps_normal.mp4 \
 -g 4x4 \
 --background-color 000000 \
 --metadata-font-color ffffff \
---end-delay-percent 20
+--end-delay-percent 20 \
+--metadata-font /usr/share/fonts/TTF/DejaVuSans-Bold.ttf
 ```
 ![Image](<http://i.imgur.com/rAItOp3.png>)
 
@@ -26,6 +27,7 @@ $ vcsi bbb_sunflower_2160p_60fps_normal.mp4 \
 -w 850 \
 -g 3x5 \
 --end-delay-percent 20 \
+--timestamp-font /usr/share/fonts/TTF/DejaVuSans.ttf \
 -o output.png
 ```
 ![Image](<http://i.imgur.com/TA4JXal.jpg>)
