@@ -183,7 +183,7 @@ class MediaInfo(object):
         except KeyError:
             rotation = None
 
-        if rotation == 90:
+        if rotation in [90, 270]:
             # swap width and height
             self.sample_width, self.sample_height = self.sample_height, self.sample_width
 
