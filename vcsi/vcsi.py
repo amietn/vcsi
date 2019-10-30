@@ -18,6 +18,7 @@ try:
 except ImportError:
     DEVNULL = open(os.devnull, 'wb')
 import argparse
+import configparser
 import json
 import math
 import tempfile
@@ -62,6 +63,10 @@ class Color(namedtuple('Color', ['r', 'g', 'b', 'a'])):
 TimestampPosition = Enum('TimestampPosition', "north south east west ne nw se sw center")
 VALID_TIMESTAMP_POSITIONS = [x.name for x in TimestampPosition]
 
+
+DEFAULT_CONFIG_FILE = os.path.join(os.path.expanduser("~"), ".config/vcsi.conf")
+DEFAULT_CONFIG_SECTION = "vcsi"
+
 DEFAULT_METADATA_FONT_SIZE = 16
 DEFAULT_METADATA_FONT = "/usr/share/fonts/TTF/DejaVuSans-Bold.ttf"
 DEFAULT_TIMESTAMP_FONT_SIZE = 12
@@ -98,6 +103,63 @@ DEFAULT_IMAGE_FORMAT = "jpg"
 DEFAULT_TIMESTAMP_POSITION = TimestampPosition.se
 DEFAULT_FRAME_TYPE = None
 DEFAULT_INTERVAL = None
+
+
+class Config:
+    metadata_font_size = DEFAULT_METADATA_FONT_SIZE
+    metadata_font = DEFAULT_METADATA_FONT
+    timestamp_font_size = DEFAULT_TIMESTAMP_FONT_SIZE
+    timestamp_font = DEFAULT_TIMESTAMP_FONT
+    fallback_fonts = FALLBACK_FONTS
+    contact_sheet_width = DEFAULT_CONTACT_SHEET_WIDTH
+    delay_percent = DEFAULT_DELAY_PERCENT
+    start_delay_percent = DEFAULT_START_DELAY_PERCENT
+    end_delay_percent = DEFAULT_END_DELAY_PERCENT
+    grid_spacing = DEFAULT_GRID_SPACING
+    grid_horizontal_spacing = DEFAULT_GRID_HORIZONTAL_SPACING
+    grid_vertical_spacing = DEFAULT_GRID_VERTICAL_SPACING
+    metadata_position = DEFAULT_METADATA_POSITION
+    metadata_font_color = DEFAULT_METADATA_FONT_COLOR
+    background_color = DEFAULT_BACKGROUND_COLOR
+    timestamp_font_color = DEFAULT_TIMESTAMP_FONT_COLOR
+    timestamp_background_color = DEFAULT_TIMESTAMP_BACKGROUND_COLOR
+    timestamp_border_color = DEFAULT_TIMESTAMP_BORDER_COLOR
+    timestamp_border_size = DEFAULT_TIMESTAMP_BORDER_SIZE
+    accurate_delay_seconds = DEFAULT_ACCURATE_DELAY_SECONDS
+    metadata_margin = DEFAULT_METADATA_MARGIN
+    metadata_horizontal_margin = DEFAULT_METADATA_HORIZONTAL_MARGIN
+    metadata_vertical_margin = DEFAULT_METADATA_VERTICAL_MARGIN
+    capture_alpha = DEFAULT_CAPTURE_ALPHA
+    grid_size = DEFAULT_GRID_SIZE
+    timestamp_horizontal_padding = DEFAULT_TIMESTAMP_HORIZONTAL_PADDING
+    timestamp_vertical_padding = DEFAULT_TIMESTAMP_VERTICAL_PADDING
+    timestamp_horizontal_margin = DEFAULT_TIMESTAMP_HORIZONTAL_MARGIN
+    timestamp_vertical_margin = DEFAULT_TIMESTAMP_VERTICAL_MARGIN
+    quality = DEFAULT_IMAGE_QUALITY
+    format = DEFAULT_IMAGE_FORMAT
+    timestamp_position = DEFAULT_TIMESTAMP_POSITION
+    frame_type = DEFAULT_FRAME_TYPE
+    interval = DEFAULT_INTERVAL
+
+    @classmethod
+    def load_configuration(cls, filename=DEFAULT_CONFIG_FILE):
+        config = configparser.ConfigParser(default_section=DEFAULT_CONFIG_SECTION)
+        config.read(filename)
+
+        for config_entry in cls.__dict__.keys():
+            # skip magic attributes
+            if config_entry.startswith('__'):
+                continue
+            setattr(cls, config_entry, config.get(
+                DEFAULT_CONFIG_SECTION,
+                config_entry,
+                fallback=getattr(cls, config_entry)
+            ))
+        # special cases
+        # fallback_fonts is an array, it's reflected as comma separated list in config file
+        fallback_fonts = config.get(DEFAULT_CONFIG_SECTION, 'fallback_fonts', fallback=None)
+        if fallback_fonts:
+            cls.fallback_fonts = comma_separated_string_type(fallback_fonts)
 
 
 class MediaInfo(object):
@@ -303,7 +365,7 @@ class MediaInfo(object):
             "millis": millis
         }
 
-    def desired_size(self, width=DEFAULT_CONTACT_SHEET_WIDTH):
+    def desired_size(self, width=Config.contact_sheet_width):
         """Computes the height based on a given width and fixed aspect ratio.
         Returns (width, height)
         """
@@ -407,8 +469,8 @@ class MediaCapture(object):
     """Capture frames of a video
     """
 
-    def __init__(self, path, accurate=False, skip_delay_seconds=DEFAULT_ACCURATE_DELAY_SECONDS,
-                 frame_type=DEFAULT_FRAME_TYPE):
+    def __init__(self, path, accurate=False, skip_delay_seconds=Config.accurate_delay_seconds,
+                 frame_type=Config.frame_type):
         self.path = path
         self.accurate = accurate
         self.skip_delay_seconds = skip_delay_seconds
@@ -549,8 +611,8 @@ class MediaCapture(object):
 def grid_desired_size(
         grid,
         media_info,
-        width=DEFAULT_CONTACT_SHEET_WIDTH,
-        horizontal_margin=DEFAULT_GRID_HORIZONTAL_SPACING):
+        width=Config.contact_sheet_width,
+        horizontal_margin=Config.grid_horizontal_spacing):
     """Computes the size of the images placed on a mxn grid with given fixed width.
     Returns (width, height)
     """
@@ -753,7 +815,7 @@ def max_line_length(
         media_info,
         metadata_font,
         header_margin,
-        width=DEFAULT_CONTACT_SHEET_WIDTH,
+        width=Config.contact_sheet_width,
         text=None):
     """Find the number of characters that fit in width with given font.
     """
@@ -882,8 +944,8 @@ def compose_contact_sheet(
     width = args.grid.x * (desired_size[0] + args.grid_horizontal_spacing) - args.grid_horizontal_spacing
     height = args.grid.y * (desired_size[1] + args.grid_vertical_spacing) - args.grid_vertical_spacing
 
-    header_font = load_font(args, args.metadata_font, args.metadata_font_size, DEFAULT_METADATA_FONT)
-    timestamp_font = load_font(args, args.timestamp_font, args.timestamp_font_size, DEFAULT_TIMESTAMP_FONT)
+    header_font = load_font(args, args.metadata_font, args.metadata_font_size, Config.metadata_font)
+    timestamp_font = load_font(args, args.timestamp_font, args.timestamp_font_size, Config.timestamp_font)
 
     header_lines = prepare_metadata_text_lines(
         media_info,
@@ -1188,6 +1250,25 @@ def error_exit(message):
 def main():
     """Program entry point
     """
+    # Argument parser before actual argument parser to let the user overwrite the config path
+    preargparser = argparse.ArgumentParser(add_help=False)
+    preargparser.add_argument("-c", "--config", dest="configfile", default=None)
+    preargs, _ = preargparser.parse_known_args()
+    try:
+        if preargs.configfile:
+            # check if the given config file exists
+            # abort if not, because the user wants to use a specific file and not the default config
+            if os.path.exists(preargs.configfile):
+                Config.load_configuration(preargs.configfile)
+            else:
+                error_exit("Could find config file")
+        else:
+            # check if the config file exists and load it
+            if os.path.exists(DEFAULT_CONFIG_FILE):
+                Config.load_configuration(DEFAULT_CONFIG_FILE)
+    except configparser.MissingSectionHeaderError as e:
+        error_exit(e.message)
+
     parser = argparse.ArgumentParser(description="Create a video contact sheet",
                                      formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument("filenames", nargs="+")
@@ -1195,54 +1276,61 @@ def main():
         "-o", "--output",
         help="save to output file",
         dest="output_path")
+    # adding --config to the main parser to display it when the user asks for help
+    # the value is not important anymore
+    parser.add_argument(
+        "-c", "--config",
+        help="Config file to load defaults from",
+        default=DEFAULT_CONFIG_FILE
+    )
     parser.add_argument(
         "--start-delay-percent",
         help="do not capture frames in the first n percent of total time",
         dest="start_delay_percent",
         type=int,
-        default=DEFAULT_START_DELAY_PERCENT)
+        default=Config.start_delay_percent)
     parser.add_argument(
         "--end-delay-percent",
         help="do not capture frames in the last n percent of total time",
         dest="end_delay_percent",
         type=int,
-        default=DEFAULT_END_DELAY_PERCENT)
+        default=Config.end_delay_percent)
     parser.add_argument(
         "--delay-percent",
         help="do not capture frames in the first and last n percent of total time",
         dest="delay_percent",
         type=int,
-        default=DEFAULT_DELAY_PERCENT)
+        default=Config.delay_percent)
     parser.add_argument(
         "--grid-spacing",
         help="number of pixels spacing captures both vertically and horizontally",
         dest="grid_spacing",
         type=int,
-        default=DEFAULT_GRID_SPACING)
+        default=Config.grid_spacing)
     parser.add_argument(
         "--grid-horizontal-spacing",
         help="number of pixels spacing captures horizontally",
         dest="grid_horizontal_spacing",
         type=int,
-        default=DEFAULT_GRID_HORIZONTAL_SPACING)
+        default=Config.grid_horizontal_spacing)
     parser.add_argument(
         "--grid-vertical-spacing",
         help="number of pixels spacing captures vertically",
         dest="grid_vertical_spacing",
         type=int,
-        default=DEFAULT_GRID_VERTICAL_SPACING)
+        default=Config.grid_vertical_spacing)
     parser.add_argument(
         "-w", "--width",
         help="width of the generated contact sheet",
         dest="vcs_width",
         type=int,
-        default=DEFAULT_CONTACT_SHEET_WIDTH)
+        default=Config.contact_sheet_width)
     parser.add_argument(
         "-g", "--grid",
         help="display frames on a mxn grid (for example 4x5). The special value zero (as in 2x0 or 0x5 or 0x0) is only allowed when combined with --interval or with --manual. Zero means that the component should be automatically deduced based on other arguments passed.",
         dest="grid",
         type=mxn_type,
-        default=DEFAULT_GRID_SIZE)
+        default=Config.grid_size)
     parser.add_argument(
         "-s", "--num-samples",
         help="number of samples",
@@ -1259,59 +1347,59 @@ def main():
         help="size of the font used for metadata",
         dest="metadata_font_size",
         type=int,
-        default=DEFAULT_METADATA_FONT_SIZE)
+        default=Config.metadata_font_size)
     parser.add_argument(
         "--metadata-font",
         help="TTF font used for metadata",
         dest="metadata_font",
-        default=DEFAULT_METADATA_FONT)
+        default=Config.metadata_font)
     parser.add_argument(
         "--timestamp-font-size",
         help="size of the font used for timestamps",
         dest="timestamp_font_size",
         type=int,
-        default=DEFAULT_TIMESTAMP_FONT_SIZE)
+        default=Config.timestamp_font_size)
     parser.add_argument(
         "--timestamp-font",
         help="TTF font used for timestamps",
         dest="timestamp_font",
-        default=DEFAULT_TIMESTAMP_FONT)
+        default=Config.timestamp_font)
     parser.add_argument(
         "--metadata-position",
         help="Position of the metadata header. Must be one of ['top', 'bottom', 'hidden']",
         dest="metadata_position",
         type=metadata_position_type,
-        default=DEFAULT_METADATA_POSITION)
+        default=Config.metadata_position)
     parser.add_argument(
         "--background-color",
         help="Color of the background in hexadecimal, for example AABBCC",
         dest="background_color",
         type=hex_color_type,
-        default=hex_color_type(DEFAULT_BACKGROUND_COLOR))
+        default=hex_color_type(Config.background_color))
     parser.add_argument(
         "--metadata-font-color",
         help="Color of the metadata font in hexadecimal, for example AABBCC",
         dest="metadata_font_color",
         type=hex_color_type,
-        default=hex_color_type(DEFAULT_METADATA_FONT_COLOR))
+        default=hex_color_type(Config.metadata_font_color))
     parser.add_argument(
         "--timestamp-font-color",
         help="Color of the timestamp font in hexadecimal, for example AABBCC",
         dest="timestamp_font_color",
         type=hex_color_type,
-        default=hex_color_type(DEFAULT_TIMESTAMP_FONT_COLOR))
+        default=hex_color_type(Config.timestamp_font_color))
     parser.add_argument(
         "--timestamp-background-color",
         help="Color of the timestamp background rectangle in hexadecimal, for example AABBCC",
         dest="timestamp_background_color",
         type=hex_color_type,
-        default=hex_color_type(DEFAULT_TIMESTAMP_BACKGROUND_COLOR))
+        default=hex_color_type(Config.timestamp_background_color))
     parser.add_argument(
         "--timestamp-border-color",
         help="Color of the timestamp border in hexadecimal, for example AABBCC",
         dest="timestamp_border_color",
         type=hex_color_type,
-        default=hex_color_type(DEFAULT_TIMESTAMP_BORDER_COLOR))
+        default=hex_color_type(Config.timestamp_border_color))
     parser.add_argument(
         "--template",
         help="Path to metadata template file",
@@ -1337,68 +1425,68 @@ def main():
     parser.add_argument(
         "-A", "--accurate-delay-seconds",
         type=int,
-        default=DEFAULT_ACCURATE_DELAY_SECONDS,
+        default=Config.accurate_delay_seconds,
         help="""Fast skip to N seconds before capture time, then do accurate capture
         (decodes N seconds of video before each capture). This is used with accurate capture mode only.""",
         dest="accurate_delay_seconds")
     parser.add_argument(
         "--metadata-margin",
         type=int,
-        default=DEFAULT_METADATA_MARGIN,
+        default=Config.metadata_margin,
         help="Margin (in pixels) in the metadata header.",
         dest="metadata_margin")
     parser.add_argument(
         "--metadata-horizontal-margin",
         type=int,
-        default=DEFAULT_METADATA_HORIZONTAL_MARGIN,
+        default=Config.metadata_horizontal_margin,
         help="Horizontal margin (in pixels) in the metadata header.",
         dest="metadata_horizontal_margin")
     parser.add_argument(
         "--metadata-vertical-margin",
         type=int,
-        default=DEFAULT_METADATA_VERTICAL_MARGIN,
+        default=Config.metadata_vertical_margin,
         help="Vertical margin (in pixels) in the metadata header.",
         dest="metadata_vertical_margin")
     parser.add_argument(
         "--timestamp-horizontal-padding",
         type=int,
-        default=DEFAULT_TIMESTAMP_HORIZONTAL_PADDING,
+        default=Config.timestamp_horizontal_padding,
         help="Horizontal padding (in pixels) for timestamps.",
         dest="timestamp_horizontal_padding")
     parser.add_argument(
         "--timestamp-vertical-padding",
         type=int,
-        default=DEFAULT_TIMESTAMP_VERTICAL_PADDING,
+        default=Config.timestamp_vertical_padding,
         help="Vertical padding (in pixels) for timestamps.",
         dest="timestamp_vertical_padding")
     parser.add_argument(
         "--timestamp-horizontal-margin",
         type=int,
-        default=DEFAULT_TIMESTAMP_HORIZONTAL_MARGIN,
+        default=Config.timestamp_horizontal_margin,
         help="Horizontal margin (in pixels) for timestamps.",
         dest="timestamp_horizontal_margin")
     parser.add_argument(
         "--timestamp-vertical-margin",
         type=int,
-        default=DEFAULT_TIMESTAMP_VERTICAL_MARGIN,
+        default=Config.timestamp_vertical_margin,
         help="Vertical margin (in pixels) for timestamps.",
         dest="timestamp_vertical_margin")
     parser.add_argument(
         "--quality",
         type=int,
-        default=DEFAULT_IMAGE_QUALITY,
+        default=Config.quality,
         help="Output image quality. Must be an integer in the range 0-100. 100 = best quality.",
         dest="image_quality")
     parser.add_argument(
         "-f", "--format",
         type=str,
-        default=DEFAULT_IMAGE_FORMAT,
+        default=Config.format,
         help="Output image format. Can be any format supported by pillow. For example 'png' or 'jpg'.",
         dest="image_format")
     parser.add_argument(
         "-T", "--timestamp-position",
         type=timestamp_position_type,
-        default=DEFAULT_TIMESTAMP_POSITION,
+        default=Config.timestamp_position,
         help="Timestamp position. Must be one of %s." % (VALID_TIMESTAMP_POSITIONS,),
         dest="timestamp_position")
     parser.add_argument(
@@ -1414,13 +1502,13 @@ def main():
     parser.add_argument(
         "--timestamp-border-size",
         type=int,
-        default=DEFAULT_TIMESTAMP_BORDER_SIZE,
+        default=Config.timestamp_border_size,
         help="Size of the timestamp border in pixels (used only with --timestamp-border-mode).",
         dest="timestamp_border_size")
     parser.add_argument(
         "--capture-alpha",
         type=int,
-        default=DEFAULT_CAPTURE_ALPHA,
+        default=Config.capture_alpha,
         help="Alpha channel value for the captures (transparency in range [0, 255]). Defaults to 255 (opaque)",
         dest="capture_alpha")
     parser.add_argument(
@@ -1440,7 +1528,7 @@ def main():
     parser.add_argument(
         "--interval",
         type=interval_type,
-        default=DEFAULT_INTERVAL,
+        default=Config.interval,
         help="Capture frames at specified interval. Interval format is any string supported by `parsedatetime`. For example '5m', '3 minutes 5 seconds', '1 hour 15 min and 20 sec' etc.",
         dest="interval")
     parser.add_argument(
