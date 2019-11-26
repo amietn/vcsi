@@ -1112,14 +1112,20 @@ def save_image(args, image, media_info, output_path):
         return False
 
 
-def cleanup(frames):
+def cleanup(frames, args):
     """Delete temporary captures
     """
+    if args.is_verbose:
+        print("Deleting {} temporary frames...".format(len(frames)))
     for frame in frames:
         try:
+            if args.is_verbose:
+                print("Deleting {} ...".format(frame.filename))
             os.unlink(frame.filename)
-        except:
-            pass
+        except Exception as e:
+            if args.is_verbose:
+                print("[Error] Failed to delete {}".format(frame.filename))
+                print(e)
 
 
 def print_template_attributes():
@@ -1753,7 +1759,7 @@ def process_file(path, args):
             shutil.copyfile(frame.filename, thumbnail_destination)
 
     print("Cleaning up temporary files...")
-    cleanup(temp_frames)
+    cleanup(temp_frames, args)
 
     if not is_save_successful:
         error_exit("Unsupported image format: %s." % (args.image_format,))
