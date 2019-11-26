@@ -63,7 +63,6 @@ class Color(namedtuple('Color', ['r', 'g', 'b', 'a'])):
 TimestampPosition = Enum('TimestampPosition', "north south east west ne nw se sw center")
 VALID_TIMESTAMP_POSITIONS = [x.name for x in TimestampPosition]
 
-
 DEFAULT_CONFIG_FILE = os.path.join(os.path.expanduser("~"), ".config/vcsi.conf")
 DEFAULT_CONFIG_SECTION = "vcsi"
 
@@ -1585,31 +1584,35 @@ def main():
         print_template_attributes()
         sys.exit(0)
 
+    def process_file_or_ignore(filepath, args):
+        try:
+            process_file(filepath, args)
+        except Exception:
+            if not args.ignore_errors:
+                raise
+            else:
+                print("[WARN]: failed to process {} ... skipping.".format(filepath), file=sys.stderr)
+
     if args.recursive:
         for path in args.filenames:
             for root, subdirs, files in os.walk(path):
                 for f in files:
                     filepath = os.path.join(root, f)
-                    try:
-                        process_file(filepath, args)
-                    except Exception:
-                        if not args.ignore_errors:
-                            raise
-                        else:
-                            print("[WARN]: failed to process {} ... skipping.".format(filepath), file=sys.stderr)
+                    process_file_or_ignore(filepath, args)
     else:
         for path in args.filenames:
             if os.path.isdir(path):
                 for filepath in os.listdir(path):
                     abs_filepath = os.path.join(path, filepath)
                     if not os.path.isdir(abs_filepath):
-                        process_file(abs_filepath, args)
+                        process_file_or_ignore(abs_filepath, args)
+
             else:
                 files_to_process = glob(escape(path))
                 if len(files_to_process) == 0:
                     files_to_process = [path]
                 for filename in files_to_process:
-                    process_file(filename, args)
+                    process_file_or_ignore(filename, args)
 
 
 def process_file(path, args):
