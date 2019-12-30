@@ -79,7 +79,6 @@ if os.name == 'nt':
     DEFAULT_METADATA_FONT = "C:/Windows/Fonts/msgothic.ttc"
     DEFAULT_TIMESTAMP_FONT = "C:/Windows/Fonts/msgothic.ttc"
     FALLBACK_FONTS = [
-        "C:/Windows/Fonts/msgothic.ttc",
         "C:/Windows/Fonts/simsun.ttc",
         "C:/Windows/Fonts/Everson Mono.ttf",
         "C:/Windows/Fonts/calibri.ttf",
