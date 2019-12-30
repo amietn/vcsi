@@ -67,12 +67,24 @@ DEFAULT_CONFIG_FILE = os.path.join(os.path.expanduser("~"), ".config/vcsi.conf")
 DEFAULT_CONFIG_SECTION = "vcsi"
 
 DEFAULT_METADATA_FONT_SIZE = 16
-DEFAULT_METADATA_FONT = "/usr/share/fonts/TTF/DejaVuSans-Bold.ttf"
 DEFAULT_TIMESTAMP_FONT_SIZE = 12
+
+# Defaults
+DEFAULT_METADATA_FONT = "/usr/share/fonts/TTF/DejaVuSans-Bold.ttf"
 DEFAULT_TIMESTAMP_FONT = "/usr/share/fonts/TTF/DejaVuSans.ttf"
-FALLBACK_FONTS = [
-    "/Library/Fonts/Arial Unicode.ttf"
-]
+FALLBACK_FONTS = ["/Library/Fonts/Arial Unicode.ttf"]
+
+# Replace defaults on Windows to support unicode/CJK and multiple fallbacks
+if os.name == 'nt':
+    DEFAULT_METADATA_FONT = "C:/Windows/Fonts/msgothic.ttc"
+    DEFAULT_TIMESTAMP_FONT = "C:/Windows/Fonts/msgothic.ttc"
+    FALLBACK_FONTS = [
+        "C:/Windows/Fonts/simsun.ttc",
+        "C:/Windows/Fonts/Everson Mono.ttf",
+        "C:/Windows/Fonts/calibri.ttf",
+        "C:/Windows/Fonts/arial.ttf"
+    ]
+
 DEFAULT_CONTACT_SHEET_WIDTH = 1500
 DEFAULT_DELAY_PERCENT = None
 DEFAULT_START_DELAY_PERCENT = 7
