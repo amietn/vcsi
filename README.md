@@ -93,7 +93,8 @@ Must be in your PATH:
 
 ```
 $ vcsi -h
-usage: vcsi [-h] [-o OUTPUT_PATH] [--start-delay-percent START_DELAY_PERCENT]
+usage: vcsi [-h] [-o OUTPUT_PATH] [-c CONFIG]
+            [--start-delay-percent START_DELAY_PERCENT]
             [--end-delay-percent END_DELAY_PERCENT]
             [--delay-percent DELAY_PERCENT] [--grid-spacing GRID_SPACING]
             [--grid-horizontal-spacing GRID_HORIZONTAL_SPACING]
@@ -123,7 +124,10 @@ usage: vcsi [-h] [-o OUTPUT_PATH] [--start-delay-percent START_DELAY_PERCENT]
             [--timestamp-border-size TIMESTAMP_BORDER_SIZE]
             [--capture-alpha CAPTURE_ALPHA] [--version]
             [--list-template-attributes] [--frame-type FRAME_TYPE]
-            [--interval INTERVAL] [--ignore-errors]
+            [--interval INTERVAL] [--ignore-errors] [--no-overwrite]
+            [--exclude-extensions EXCLUDE_EXTENSIONS] [--fast]
+            [-O THUMBNAIL_OUTPUT_PATH] [-S]
+            [--timestamp-format TIMESTAMP_FORMAT]
             filenames [filenames ...]
 
 Create a video contact sheet
@@ -135,6 +139,9 @@ optional arguments:
   -h, --help            show this help message and exit
   -o OUTPUT_PATH, --output OUTPUT_PATH
                         save to output file (default: None)
+  -c CONFIG, --config CONFIG
+                        Config file to load defaults from (default:
+                        C:\Users\zacke\.config/vcsi.conf)
   --start-delay-percent START_DELAY_PERCENT
                         do not capture frames in the first n percent of total
                         time (default: 7)
@@ -155,7 +162,11 @@ optional arguments:
                         5)
   -w VCS_WIDTH, --width VCS_WIDTH
                         width of the generated contact sheet (default: 1500)
-  -g GRID, --grid GRID  display frames on a mxn grid (for example 4x5)
+  -g GRID, --grid GRID  display frames on a mxn grid (for example 4x5). The
+                        special value zero (as in 2x0 or 0x5 or 0x0) is only
+                        allowed when combined with --interval or with
+                        --manual. Zero means that the component should be
+                        automatically deduced based on other arguments passed.
                         (default: 4x4)
   -s NUM_SAMPLES, --num-samples NUM_SAMPLES
                         number of samples (default: None)
@@ -164,12 +175,12 @@ optional arguments:
                         size of the font used for metadata (default: 16)
   --metadata-font METADATA_FONT
                         TTF font used for metadata (default:
-                        /usr/share/fonts/TTF/DejaVuSans-Bold.ttf)
+                        C:/Windows/Fonts/msgothic.ttc)
   --timestamp-font-size TIMESTAMP_FONT_SIZE
                         size of the font used for timestamps (default: 12)
   --timestamp-font TIMESTAMP_FONT
                         TTF font used for timestamps (default:
-                        /usr/share/fonts/TTF/DejaVuSans.ttf)
+                        C:/Windows/Fonts/msgothic.ttc)
   --metadata-position METADATA_POSITION
                         Position of the metadata header. Must be one of
                         ['top', 'bottom', 'hidden'] (default: top)
@@ -260,6 +271,34 @@ optional arguments:
   --ignore-errors       Ignore any error encountered while processing files
                         recursively and continue to the next file. (default:
                         False)
+  --no-overwrite        Do not overwrite output file if it already exists,
+                        simply ignore this file and continue processing other
+                        unprocessed files. (default: False)
+  --exclude-extensions EXCLUDE_EXTENSIONS
+                        Do not process files that end with the given
+                        extensions. (default: [])
+  --fast                Fast mode. Just make a contact sheet as fast as
+                        possible, regardless of output image quality. May mess
+                        up the terminal. (default: False)
+  -O THUMBNAIL_OUTPUT_PATH, --thumbnail-output THUMBNAIL_OUTPUT_PATH
+                        Save thumbnail files to the specified output
+                        directory. If set, the thumbnail files will not be
+                        deleted after successful creation of the contact
+                        sheet. (default: None)
+  -S, --actual-size     Make thumbnails of actual size. In other words,
+                        thumbnails will have the actual 1:1 size of the video
+                        resolution. (default: False)
+  --timestamp-format TIMESTAMP_FORMAT
+                        Use specified timestamp format. Replaced values
+                        include: {TIME}, {DURATION}, {THUMBNAIL_NUMBER}, {H}
+                        (hours), {M} (minutes), {S} (seconds), {c}
+                        (centiseconds), {m} (milliseconds), {dH}, {dM}, {dS},
+                        {dc} and {dm} (same as previous values but for the
+                        total duration). Example format: '{TIME} /
+                        {DURATION}'. Another example: '{THUMBNAIL_NUMBER}'.
+                        Yet another example: '{H}:{M}:{S}.{m} /
+                        {dH}:{dM}:{dS}.{dm}'. (default: {TIME})
+
 
 ```
 
