@@ -201,6 +201,7 @@ class MediaInfo(object):
             "-print_format", "json",
             "-show_format",
             "-show_streams",
+            "--",
             path
         ]
 
