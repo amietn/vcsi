@@ -1696,7 +1696,7 @@ def process_file(path, args):
     if args.interval is not None:
         total_delay = total_delay_seconds(media_info, args)
         selected_duration = media_info.duration_seconds - total_delay
-        args.num_samples = math.floor(selected_duration / args.interval.total_seconds())
+        args.num_samples = math.floor((selected_duration - 1) / args.interval.total_seconds())
         args.num_selected = args.num_samples
         args.num_groups = args.num_samples
 
