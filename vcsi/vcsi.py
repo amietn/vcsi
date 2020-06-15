@@ -705,32 +705,24 @@ def select_sharpest_images(
     futures = []
 
     if args.fast:
-        # use multiple threads
-        with ThreadPoolExecutor() as executor:
-            for i, timestamp_tuple in enumerate(timestamps):
-                status = "Starting task... {}/{}".format(i + 1, args.num_samples)
-                print(status, end="\r")
-                suffix = ".jpg"  # faster processing time
-                future = executor.submit(do_capture, timestamp_tuple, desired_size[0], desired_size[1], suffix, args)
-                futures.append(future)
-            print()
-
-            for i, future in enumerate(futures):
-                status = "Sampling... {}/{}".format(i + 1, args.num_samples)
-                print(status, end="\r")
-                frame = future.result()
-                blurs += [
-                    frame
-                ]
-            print()
+        suffix = ".jpg"  # faster processing time
     else:
-        # grab captures sequentially
+        suffix = ".png"  # arguably higher image quality
+        
+    # use multiple threads
+    with ThreadPoolExecutor() as executor:
         for i, timestamp_tuple in enumerate(timestamps):
+            status = "Starting task... {}/{}".format(i + 1, args.num_samples)
+            print(status, end="\r")
+            
+            future = executor.submit(do_capture, timestamp_tuple, desired_size[0], desired_size[1], suffix, args)
+            futures.append(future)
+        print()
+
+        for i, future in enumerate(futures):
             status = "Sampling... {}/{}".format(i + 1, args.num_samples)
             print(status, end="\r")
-            suffix = ".png"  # arguably higher image quality
-            frame = do_capture(timestamp_tuple, desired_size[0], desired_size[1], suffix, args)
-
+            frame = future.result()
             blurs += [
                 frame
             ]
