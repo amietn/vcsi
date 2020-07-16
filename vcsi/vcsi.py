@@ -592,7 +592,7 @@ class MediaCapture(object):
         b = abs(numpy.fft.rfft2(a))
         max_freq = self.avg9x(b)
 
-        if max_freq is not 0:
+        if max_freq != 0:
             return 1 / max_freq
         else:
             return 1
