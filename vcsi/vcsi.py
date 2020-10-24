@@ -400,6 +400,11 @@ class MediaInfo(object):
             self.video_codec_long = None
 
         try:
+            self.video_bit_rate = int(self.video_stream["bit_rate"])
+        except KeyError:
+            self.video_bit_rate = None
+
+        try:
             self.sample_aspect_ratio = self.video_stream["sample_aspect_ratio"]
         except KeyError:
             self.sample_aspect_ratio = None
@@ -466,6 +471,7 @@ class MediaInfo(object):
         table.append({"name": "video_codec", "description": "Video codec", "example": "h264"})
         table.append({"name": "video_codec_long", "description": "Video codec (long name)",
                       "example": "H.264 / AVC / MPEG-4 AVC / MPEG-4 part 10"})
+        table.append({"name": "video_bit_rate", "description": "Video bitrate", "example": "4000"})
         table.append({"name": "display_aspect_ratio", "description": "Display aspect ratio", "example": "16:9"})
         table.append({"name": "sample_aspect_ratio", "description": "Sample aspect ratio", "example": "1:1"})
         table.append({"name": "audio_codec", "description": "Audio codec", "example": "aac"})
