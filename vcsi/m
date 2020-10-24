@@ -734,7 +734,7 @@ def select_sharpest_images(
         for i, timestamp_tuple in enumerate(timestamps):
             status = "Sampling... {}/{}".format(i + 1, args.num_samples)
             print(status, end="\r")
-            suffix = ".png"  # arguably higher image quality
+            suffix = ".bmp"  # lossless
             frame = do_capture(timestamp_tuple, desired_size[0], desired_size[1], suffix, args)
 
             blurs += [
