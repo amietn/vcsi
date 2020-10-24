@@ -72,7 +72,7 @@ DEFAULT_TIMESTAMP_FONT_SIZE = 12
 # Defaults
 DEFAULT_METADATA_FONT = "/usr/share/fonts/TTF/DejaVuSans-Bold.ttf"
 DEFAULT_TIMESTAMP_FONT = "/usr/share/fonts/TTF/DejaVuSans.ttf"
-FALLBACK_FONTS = ["/Library/Fonts/Arial Unicode.ttf"]
+FALLBACK_FONTS = ["/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", "/Library/Fonts/Arial Unicode.ttf"]
 
 # Replace defaults on Windows to support unicode/CJK and multiple fallbacks
 if os.name == 'nt':
