@@ -565,7 +565,7 @@ class MediaCapture(object):
                 ]
 
         try:
-            subprocess.call(ffmpeg_command, stderr=DEVNULL, stdout=DEVNULL)
+            subprocess.call(ffmpeg_command, stdin=DEVNULL, stderr=DEVNULL, stdout=DEVNULL)
         except FileNotFoundError:
             error = "Could not find 'ffmpeg' executable. Please make sure ffmpeg/ffprobe is installed and is in your PATH."
             error_exit(error)
