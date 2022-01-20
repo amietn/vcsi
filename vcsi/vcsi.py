@@ -10,6 +10,7 @@ import os
 import shutil
 import subprocess
 import sys
+from argparse import ArgumentTypeError
 from concurrent.futures import ThreadPoolExecutor
 from copy import deepcopy
 
@@ -317,6 +318,11 @@ class MediaInfo(object):
             left = pretty_duration
 
         left_split = left.split(":")
+
+        if len(left_split) > 3:
+            e = f"Timestamp {pretty_duration} ill formatted"
+            raise ArgumentTypeError(e)
+
         if len(left_split) < 3:
             hours = 0
             minutes = int(left_split[0])
