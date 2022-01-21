@@ -197,3 +197,13 @@ def test_draw_metadata():
                                    header_line_height=0,
                                    start_height=0))
     draw.text.assert_called()
+
+
+def test_grid():
+    assert_equals("2x2", Grid(2, 2).__str__())
+
+    assert_equals("10x0", Grid(10, 0).__str__())
+
+def test_color():
+    assert_equals("FFFFFFFF", Color(255, 255, 255, 255).__str__())
+
