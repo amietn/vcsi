@@ -1,12 +1,13 @@
 from argparse import ArgumentTypeError
-from unittest.mock import patch
+from unittest.mock import patch, Mock, PropertyMock, MagicMock
 
 from nose.tools import assert_equals
 from nose.tools import assert_not_equals
 from nose.tools import assert_raises
 
 from vcsi.vcsi import Grid, mxn_type, Color, hex_color_type, manual_timestamps, timestamp_position_type, \
-    TimestampPosition, comma_separated_string_type, metadata_position_type
+    TimestampPosition, comma_separated_string_type, metadata_position_type, cleanup, save_image,\
+    compute_timestamp_position, max_line_length, draw_metadata
 from vcsi import vcsi
 
 
@@ -111,3 +112,88 @@ def test_metadata_position_type():
     assert_equals(metadata_position_type("TOP"), "top")
 
     assert_raises(ArgumentTypeError, metadata_position_type, "whatever")
+
+
+@patch("vcsi.vcsi.os")
+def test_cleanup(mocked_os):
+    mocked_os.unlink.side_effect = lambda x: True
+    args = Mock()
+    args.is_verbose = False
+    frames = [Mock()]
+    frames[0].filename = "frame1"
+    cleanup(frames, args)
+
+    mocked_os.unlink.assert_called_once_with("frame1")
+
+
+@patch("vcsi.vcsi.Image")
+def test_save_image(mocked_Image):
+    args = PropertyMock()
+    output_path = "whatever"
+    assert_equals(True, save_image(args, mocked_Image, None, output_path))
+
+    mocked_Image.convert().save.assert_called_once()
+
+
+def test_compute_timestamp_position():
+    args = PropertyMock()
+    args.timestamp_horizontal_margin = 10
+    args.timestamp_vertical_margin = 10
+    w, h = 1000, 500
+    text_size = (10, 10)
+    desired_size = (20, 20)
+    rectangle_hpadding, rectangle_vpadding = 5, 5
+
+    args.timestamp_position = TimestampPosition.west
+    assert_equals(((1010, 500.0), (1030, 520.0)),
+                  compute_timestamp_position(args, w, h, text_size, desired_size, rectangle_hpadding,
+                                             rectangle_vpadding))
+
+    args.timestamp_position = TimestampPosition.north
+    assert_equals(((1000, 510.0), (1020, 530.0)),
+                  compute_timestamp_position(args, w, h, text_size, desired_size, rectangle_hpadding,
+                                             rectangle_vpadding))
+
+    args.timestamp_position = None
+    assert_equals(((990, 490), (1010, 510)),
+                  compute_timestamp_position(args, w, h, text_size, desired_size, rectangle_hpadding,
+                                             rectangle_vpadding))
+
+
+def test_max_line_length():
+    media_info = PropertyMock()
+    metadata_font = PropertyMock()
+    metadata_font.getsize.return_value = (40, 40)
+    header_margin = 100
+    width = 1000
+
+    text = "A long line of text"
+    assert_equals(19, max_line_length(media_info, metadata_font, header_margin, width, text))
+
+    text = "A long line of text with a few more words"
+    assert_equals(41, max_line_length(media_info, metadata_font, header_margin, width, text))
+
+    text = "A really long line of text with a lots more words" * 100
+    assert_equals(4900, max_line_length(media_info, metadata_font, header_margin, width, text))
+
+    text = None
+    filename = PropertyMock()
+    type(media_info).filename = filename
+    # media_info.filename = filename
+    assert_equals(0, max_line_length(media_info, metadata_font, header_margin, width, text))
+    filename.assert_called_once()
+
+
+def test_draw_metadata():
+    args = Mock()
+    draw = Mock()
+    header_lines = MagicMock()
+    draw.text.return_value = 0
+    args.metadata_vertical_margin = 0
+    header_lines.__iter__ = Mock(return_value=iter(['text1', 'text2']))
+
+    assert_equals(0, draw_metadata(draw, args,
+                                   header_lines=header_lines,
+                                   header_line_height=0,
+                                   start_height=0))
+    draw.text.assert_called()
