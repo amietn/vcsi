@@ -1,5 +1,6 @@
 import json
 import argparse
+from argparse import ArgumentTypeError
 
 from nose.tools import assert_raises
 from nose.tools import assert_equals
@@ -111,3 +112,13 @@ def test_pretty_duration_millis_limit():
     mi.duration_seconds = 1.9999
     pretty_duration = MediaInfo.pretty_duration(mi.duration_seconds, show_millis=True)
     assert_equals(pretty_duration, "00:01.999")
+
+
+def test_pretty_to_seconds():
+    assert_equals(MediaInfo.pretty_to_seconds("1:11:11.111"), 4271.111)
+
+    assert_equals(MediaInfo.pretty_to_seconds("1:11:11"), 4271)
+
+    assert_equals(MediaInfo.pretty_to_seconds("1:01:00"), 3660)
+
+    assert_raises(ArgumentTypeError, MediaInfo.pretty_to_seconds, "1:01:01:01:00")
