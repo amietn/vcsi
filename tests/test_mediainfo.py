@@ -172,3 +172,13 @@ def test_parse_duration():
 
     assert_equals({'hours': 1, 'minutes': 1, 'seconds': 1, 'centis': 0, 'millis': 0}, MediaInfo.parse_duration(3661))
 
+
+def test_compute_format():
+    mi = MediaInfoForTest(FFPROBE_EXAMPLE_JSON_PATH)
+    assert_equals(634.533333, mi.duration_seconds)
+
+    del mi.video_stream["duration"]
+    mi.ffprobe_dict["format"]["duration"] = "1.99"
+    mi.compute_format()
+    assert_equals(1.99, mi.duration_seconds)
+

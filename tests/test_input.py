@@ -5,10 +5,10 @@ from nose.tools import assert_equals
 from nose.tools import assert_not_equals
 from nose.tools import assert_raises
 
-from vcsi.vcsi import Grid, mxn_type, Color, hex_color_type, manual_timestamps, timestamp_position_type, \
-    TimestampPosition, comma_separated_string_type, metadata_position_type, cleanup, save_image,\
-    compute_timestamp_position, max_line_length, draw_metadata
 from vcsi import vcsi
+from vcsi.vcsi import Grid, mxn_type, Color, hex_color_type, manual_timestamps, timestamp_position_type, \
+    TimestampPosition, comma_separated_string_type, metadata_position_type, cleanup, save_image, \
+    compute_timestamp_position, max_line_length, draw_metadata, MediaCapture
 
 
 def test_grid_default():
@@ -204,6 +204,135 @@ def test_grid():
 
     assert_equals("10x0", Grid(10, 0).__str__())
 
+
 def test_color():
     assert_equals("FFFFFFFF", Color(255, 255, 255, 255).__str__())
 
+
+def test_MediaCapture():
+    test_args = {"path": "path",
+                 "accurate": False,
+                 "skip_delay_seconds": 12,
+                 "frame_type": "frame_type"
+                 }
+    media_capture = MediaCapture(**test_args)
+    assert_equals("path", media_capture.path)
+    assert_equals(False, media_capture.accurate)
+    assert_equals(12, media_capture.skip_delay_seconds)
+    assert_equals("frame_type", media_capture.frame_type)
+
+
+@patch("vcsi.vcsi.subprocess.call")
+def test_make_capture(mocked_subprocess_call):
+    mocked_subprocess_call.return_value = True
+    test_args = {"path": "path",
+                 "accurate": False,
+                 "skip_delay_seconds": 12,
+                 "frame_type": "frame_type"
+                 }
+    media_capture = MediaCapture(**test_args)
+    media_capture.make_capture(1.99, 1090, 1080)
+    mocked_subprocess_call.assert_called_once()
+    ffmpeg_call_arguments = ['ffmpeg', '-ss', 1.99, '-i', 'path', '-vframes', '1', '-s', '1090x1080', '-vf',
+                             "select='eq(frame_type\\,frame_type)'", '-y', 'out.png']
+    subprocess_call_args = {
+        "stderr": -3,
+        "stdin": -3,
+        "stdout": -3
+    }
+    mocked_subprocess_call.assert_called_once_with(ffmpeg_call_arguments, **subprocess_call_args)
+
+
+@patch("vcsi.vcsi.Image")
+def test_compute_avg_color(mocked_image):
+    mockedimg = MagicMock()
+    mockedimg.convert.return_value = mockedimg
+    mockedimg.getcolors.return_value = [(1, 254), (1, 0)]
+    mocked_image.open.return_value = mockedimg
+    test_args = {"path": "path",
+                 "accurate": False,
+                 "skip_delay_seconds": 12,
+                 "frame_type": "frame_type"
+                 }
+    media_capture = MediaCapture(**test_args)
+    assert_equals(127, media_capture.compute_avg_color("whatever_image"))
+
+
+@patch("vcsi.vcsi.Image")
+@patch("vcsi.vcsi.numpy")
+@patch.object(vcsi.MediaCapture, "avg9x")
+def test_compute_blurriness(mocked_avg9x, mocked_numpy, mocked_image):
+    mockedimg = MagicMock()
+    mockedimg.convert.return_value = mockedimg
+    mocked_image.open = mockedimg
+
+    mocked_numpy.asarray.return_value = [0, 0, 0, 0, 0]
+    mocked_numpy.fft.rfft2.return_value = 0
+
+    test_args = {"path": "path",
+                 "accurate": False,
+                 "skip_delay_seconds": 12,
+                 "frame_type": "frame_type"
+                 }
+    media_capture = MediaCapture(**test_args)
+    media_capture.compute_blurriness("whatever filepath")
+
+    mocked_avg9x.verify_called_once()
+    mocked_numpy.fft.rfft2.verify_called_once()
+    mocked_image.open.verify_called_once_with("whatever filename")
+
+
+@patch("vcsi.vcsi.numpy")
+def test_avg9x(mocked_numpy):
+    test_args = {"path": "path",
+                 "accurate": False,
+                 "skip_delay_seconds": 12,
+                 "frame_type": "frame_type"
+                 }
+    media_capture = MediaCapture(**test_args)
+    test_args_matrix = MagicMock()
+    test_args_matrix.flatten.return_value = [0, 0, 0, 0, 0, 0, 0, 0, 0]
+    mocked_numpy.median.return_value = 0
+
+    assert_equals(0, media_capture.avg9x(test_args_matrix))
+    mocked_numpy.median.assert_called_once()
+    test_args_matrix.flatten.assert_called_once()
+
+
+def test_max_freq():
+    test_args = {"path": "path",
+                 "accurate": False,
+                 "skip_delay_seconds": 12,
+                 "frame_type": "frame_type"
+                 }
+    media_capture = MediaCapture(**test_args)
+    test_args_matrix = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+    assert_equals(9, media_capture.max_freq(test_args_matrix))
+
+
+@patch.object(vcsi, "grid_desired_size")
+@patch.object(vcsi, "select_color_variety")
+@patch.object(vcsi, "timestamp_generator")
+@patch("vcsi.vcsi.os")
+def test_select_sharpest_images(mocked_os, mocked_timestamp_generator, mocked_colour_variety, mocked_grid_desired_size):
+    mocked_timestamp_generator.return_value = [(1.9, 1.9), (2.0, 2.0)]
+
+    mocked_args = MagicMock()
+    mocked_args.num_groups = 2
+    mocked_args.manual_timestamps = None
+    mocked_media_capture = MagicMock()
+    vcsi.select_sharpest_images(MagicMock(), mocked_media_capture, mocked_args)
+
+    mocked_media_capture.make_capture.assert_called()
+    mocked_colour_variety.assert_called_once()
+    mocked_grid_desired_size.assert_called_once()
+    mocked_os.close.assert_called()
+
+    mocked_args.fast = False
+    vcsi.select_sharpest_images(MagicMock(), mocked_media_capture, mocked_args)
+    mocked_media_capture.make_capture.assert_called()
+    mocked_media_capture.compute_blurriness.assert_called()
+    mocked_media_capture.compute_avg_color.assert_called()
+    mocked_os.close.assert_called()
+    mocked_colour_variety.assert_called()
+    mocked_grid_desired_size.assert_called()
