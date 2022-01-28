@@ -9,10 +9,11 @@ import datetime
 import os
 import shutil
 import subprocess
-import sys
 from argparse import ArgumentTypeError
 from concurrent.futures import ThreadPoolExecutor
 from copy import deepcopy
+
+import sys
 
 try:
     from subprocess import DEVNULL
@@ -311,7 +312,11 @@ class MediaInfo(object):
         millis_split = pretty_duration.split(".")
         millis = 0
         if len(millis_split) == 2:
+            # millis_string = millis_split[1].zfill(3)
             millis = int(millis_split[1])
+            if millis > 999:
+                e = f"Millisecond duration cannot be more than 999, given {millis}"
+                raise ArgumentTypeError(e)
             left = millis_split[0]
         else:
             left = pretty_duration
@@ -322,14 +327,31 @@ class MediaInfo(object):
             e = f"Timestamp {pretty_duration} ill formatted"
             raise ArgumentTypeError(e)
 
-        if len(left_split) < 3:
-            hours = 0
-            minutes = int(left_split[0])
-            seconds = int(left_split[1])
-        else:
+        if len(left_split) == 3:
             hours = int(left_split[0])
             minutes = int(left_split[1])
             seconds = int(left_split[2])
+        elif len(left_split) == 2:
+            hours = 0
+            minutes = int(left_split[0])
+            seconds = int(left_split[1])
+        elif len(left_split) == 1:
+            hours = 0
+            minutes = 0
+            seconds = int(left_split[0])
+        else:
+            hours = 0
+            minutes = 0
+            seconds = 0
+
+        # if len(left_split) < 3:
+        #     hours = 0
+        #     minutes = int(left_split[0])
+        #     seconds = int(left_split[1])
+        # else:
+        #     hours = int(left_split[0])
+        #     minutes = int(left_split[1])
+        #     seconds = int(left_split[2])
 
         result = (millis / 1000.0) + seconds + minutes * 60 + hours * 3600
         return result

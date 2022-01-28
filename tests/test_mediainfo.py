@@ -162,6 +162,8 @@ def test_pretty_to_seconds():
 
     assert_equals(MediaInfo.pretty_to_seconds("1:00"), 60)
 
+    assert_equals(MediaInfo.pretty_to_seconds("1.999"), 1.999)
+
     assert_raises(ArgumentTypeError, MediaInfo.pretty_to_seconds, "1:01:01:01:00")
 
 
