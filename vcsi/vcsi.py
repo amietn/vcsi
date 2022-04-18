@@ -13,6 +13,7 @@ import sys
 from argparse import ArgumentTypeError
 from concurrent.futures import ThreadPoolExecutor
 from copy import deepcopy
+from typing import List, Iterable
 
 try:
     from subprocess import DEVNULL
@@ -713,7 +714,7 @@ def select_sharpest_images(
         )
         return frm
 
-    blurs = []
+    blurs: List[Frame] = []
     futures = []
 
     if args.fast:
@@ -756,7 +757,7 @@ def select_sharpest_images(
         groups = chunks(time_sorted, group_size)
 
         # find top sharpest for each group
-        selected_items = [best(x) for x in groups]
+        selected_items: List[Frame] = [best(x) for x in groups]
     else:
         selected_items = time_sorted
 
@@ -765,7 +766,7 @@ def select_sharpest_images(
     return selected_items, time_sorted
 
 
-def select_color_variety(frames, num_selected):
+def select_color_variety(frames: Iterable[Frame], num_selected):
     """Select captures so that they are not too similar to each other.
     """
     avg_color_sorted = sorted(frames, key=lambda x: x.avg_color)
@@ -800,7 +801,7 @@ def select_color_variety(frames, num_selected):
     return selected_items
 
 
-def best(captures):
+def best(captures: Frame):
     """Returns the least blurry capture
     """
     return sorted(captures, key=lambda x: x.blurriness)[0]
@@ -1777,7 +1778,7 @@ def process_file(path, args):
     if thumbnail_output_path is not None:
         os.makedirs(thumbnail_output_path, exist_ok=True)
         print("Copying thumbnails to {} ...".format(thumbnail_output_path))
-        for i, frame in enumerate(selected_frames):
+        for i, frame in enumerate(sorted(selected_frames, key=lambda x_frame: x_frame.timestamp)):
             print(frame.filename)
             thumbnail_file_extension = frame.filename.lower().split(".")[-1]
             thumbnail_filename = "{filename}.{number}.{extension}".format(filename=os.path.basename(path),
