@@ -1,13 +1,14 @@
-import argparse
 import json
+import argparse
 from argparse import ArgumentTypeError
 
-from nose.tools import assert_equals
 from nose.tools import assert_raises
+from nose.tools import assert_equals
 
-from vcsi.vcsi import Grid, grid_desired_size
 from vcsi.vcsi import MediaInfo
+from vcsi.vcsi import Grid, grid_desired_size
 from vcsi.vcsi import timestamp_generator
+
 
 FFPROBE_EXAMPLE_JSON_PATH = "tests/data/bbb_ffprobe.json"
 

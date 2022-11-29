@@ -1,16 +1,14 @@
 from argparse import ArgumentTypeError
-from datetime import datetime
-from unittest.mock import patch, Mock, PropertyMock, MagicMock, mock_open
+from unittest.mock import patch, Mock, PropertyMock, MagicMock
 
 from nose.tools import assert_equals
 from nose.tools import assert_not_equals
 from nose.tools import assert_raises
 
-from vcsi import vcsi
 from vcsi.vcsi import Grid, mxn_type, Color, hex_color_type, manual_timestamps, timestamp_position_type, \
-    TimestampPosition, comma_separated_string_type, metadata_position_type, cleanup, save_image, \
-    compute_timestamp_position, max_line_length, draw_metadata, MediaCapture, Frame, prepare_metadata_text_lines, \
-    load_font, interval_type, main, process_file
+    TimestampPosition, comma_separated_string_type, metadata_position_type, cleanup, save_image,\
+    compute_timestamp_position, max_line_length, draw_metadata
+from vcsi import vcsi
 
 
 def test_grid_default():
@@ -96,9 +94,8 @@ def test_timestamp_position_type():
 
 @patch("vcsi.vcsi.parsedatetime")
 def test_interval_type(mocked_parsedatatime):
-    mocked_cal = MagicMock()
-    mocked_cal.parseDT.return_value = (datetime(1, 1, 1, 0, 0, 30), 2)
-    mocked_parsedatatime.Calendar.return_value = mocked_cal
+    mocked_parsedatatime.return_value = 30
+    assert mocked_parsedatatime("30 seconds") == 30
 
     assert_equals(str(interval_type("30 seconds")), "0:00:30")
     mocked_parsedatatime.Calendar.assert_called_once_with()
@@ -208,7 +205,6 @@ def test_grid():
     assert_equals("2x2", Grid(2, 2).__str__())
 
     assert_equals("10x0", Grid(10, 0).__str__())
-
 
 def test_color():
     assert_equals("FFFFFFFF", Color(255, 255, 255, 255).__str__())
