@@ -1,8 +1,8 @@
 [tool.poetry]
 name = "vcsi"
-version = "7.0.13"
+version = "7.0.14"
 description = "Create video contact sheets, thumbnails, screenshots"
-authors = ["amietn <amietn@foobar>"]
+authors = ["Nils Amiet <amietn@foobar.tld>"]
 license = "MIT"
 readme = "README.md"
 
@@ -16,6 +16,9 @@ parsedatetime = "^2.6"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^7.3.1"
+
+[tool.poetry.scripts]
+vcsi = "vcsi.vcsi:main"
 
 [build-system]
 requires = ["poetry-core"]

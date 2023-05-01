@@ -50,13 +50,8 @@ $ pip install vcsi
 First install [Poetry](https://python-poetry.org/docs/#installation), then run:
 
 ```
-$ poetry install
-```
-
-Then, to run `vcsi`:
-
-```
-$ poetry run vcsi/vcsi.py
+$ poetry build
+$ pip install dist/*.whl
 ```
 
 ### Distribution packages
@@ -73,8 +68,9 @@ Your system is not listed?
 
 ```
 $ apt-get install ffmpeg
-$ python setup.py install
 ```
+
+Then use the Poetry installation method above.
 
 Running Windows? See the note below.
 
