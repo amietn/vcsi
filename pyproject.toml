@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "vcsi"
-version = "7.0.14"
+version = "7.0.15"
 description = "Create video contact sheets, thumbnails, screenshots"
 authors = ["Nils Amiet <amietn@foobar.tld>"]
 license = "MIT"
