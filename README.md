@@ -1,7 +1,6 @@
 # vcsi
 
-[![Build Status](https://travis-ci.org/amietn/vcsi.svg?branch=master)](https://travis-ci.org/amietn/vcsi)
-[![Coverage Status](https://coveralls.io/repos/github/amietn/vcsi/badge.svg?branch=master)](https://coveralls.io/github/amietn/vcsi?branch=master)
+[![Build Status](https://github.com/amietn/vcsi/actions/workflows/testing.yml/badge.svg]
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](http://opensource.org/licenses/MIT)
 [![PyPI version](https://badge.fury.io/py/vcsi.svg)](https://badge.fury.io/py/vcsi)
 
