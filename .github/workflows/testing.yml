@@ -16,6 +16,7 @@ jobs:
       - uses: abatilo/actions-poetry@v2
       - name: Install dependencies
         run: |
+          pip install --upgrade pip
           poetry config virtualenvs.create false
           poetry install
       - name: Run pytest
