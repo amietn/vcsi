@@ -6,7 +6,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: [ "3.7", "3.8", "3.9", "3.10", "3.11" ]
+        python-version: [ "3.8", "3.9", "3.10", "3.11" ]
     steps:
       - uses: actions/checkout@v3
       - name: Set up Python ${{ matrix.python-version }}
@@ -16,7 +16,8 @@ jobs:
       - uses: abatilo/actions-poetry@v2
       - name: Install dependencies
         run: |
+          poetry config virtualenvs.create false
           poetry install
       - name: Run pytest
         run: |
-          poetry run pytest --cov=vcsi.vcsi
+          pytest --cov=vcsi.vcsi
