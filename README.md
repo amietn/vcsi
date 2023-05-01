@@ -367,3 +367,9 @@ To run the test suite, run:
 ```
 poetry run pytest
 ```
+
+To measure code coverage:
+
+```
+poetry run pytest --cov=vcsi.vcsi
+```
