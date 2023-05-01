@@ -1,5 +1,0 @@
-numpy
-Pillow
-jinja2
-texttable
-parsedatetime

@@ -39,8 +39,19 @@ The above contact sheets were generated from a movie called "Big Buck Bunny".
 
 ### PyPi
 
+`vcsi` can be installed from PyPi:
+
 ```
 $ pip install vcsi
+```
+
+### Poetry
+
+First install [Poetry](https://python-poetry.org/docs/#installation), then run:
+
+```
+$ poetry build
+$ pip install dist/*.whl
 ```
 
 ### Distribution packages
@@ -57,8 +68,9 @@ Your system is not listed?
 
 ```
 $ apt-get install ffmpeg
-$ python setup.py install
 ```
+
+Then use the Poetry installation method above.
 
 Running Windows? See the note below.
 
@@ -346,3 +358,12 @@ Resolution: {{sample_width}}x{{sample_height}}
 | audio_sample_rate | Audio sample rate (Hz) | 44100 |
 | audio_bit_rate | Audio bit rate | 192000 |
 | frame_rate | Frame rate (fps) | 23.974 |
+
+
+## Testing
+
+To run the test suite, run:
+
+```
+poetry run pytest
+```
