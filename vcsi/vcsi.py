@@ -108,7 +108,7 @@ DEFAULT_METADATA_VERTICAL_MARGIN = DEFAULT_METADATA_MARGIN
 DEFAULT_CAPTURE_ALPHA = 255
 DEFAULT_GRID_SIZE = Grid(4, 4)
 DEFAULT_TIMESTAMP_HORIZONTAL_PADDING = 3
-DEFAULT_TIMESTAMP_VERTICAL_PADDING = 1
+DEFAULT_TIMESTAMP_VERTICAL_PADDING = 3
 DEFAULT_TIMESTAMP_HORIZONTAL_MARGIN = 5
 DEFAULT_TIMESTAMP_VERTICAL_MARGIN = 5
 DEFAULT_IMAGE_QUALITY = 100
@@ -852,7 +852,7 @@ def max_line_length(
     max_length = 0
     for i in range(len(text) + 1):
         text_chunk = text[:i]
-        text_width = 0 if len(text_chunk) == 0 else metadata_font.getsize(text_chunk)[0]
+        text_width = 0 if len(text_chunk) == 0 else metadata_font.getlength(text_chunk)
 
         max_length = i
         if text_width > max_width:
@@ -1047,7 +1047,11 @@ def compose_contact_sheet(
                 "dm": str(parsed_duration["millis"]).zfill(3)
             }
             timestamp_text = args.timestamp_format.format(**timestamp_args)
-            text_size = timestamp_font.getsize(timestamp_text)
+            text_bbox = timestamp_font.getbbox(timestamp_text)
+            (left, top, right, bottom) = text_bbox
+            text_width = abs(right - left)
+            text_height = abs(top - bottom)
+            text_size = (text_width, text_height)
 
             # draw rectangle
             rectangle_hpadding = args.timestamp_horizontal_padding
@@ -1098,7 +1102,8 @@ def compose_contact_sheet(
                 ),
                 timestamp_text,
                 font=timestamp_font,
-                fill=args.timestamp_font_color
+                fill=args.timestamp_font_color,
+                anchor="lt"
             )
 
         # update x position for next frame

@@ -161,7 +161,7 @@ def test_compute_timestamp_position():
 def test_max_line_length():
     media_info = PropertyMock()
     metadata_font = PropertyMock()
-    metadata_font.getsize.return_value = (40, 40)
+    metadata_font.getlength.return_value = 40
     header_margin = 100
     width = 1000
 
