@@ -1091,7 +1091,8 @@ def compose_contact_sheet(
                         ),
                         timestamp_text,
                         font=timestamp_font,
-                        fill=args.timestamp_border_color
+                        fill=args.timestamp_border_color,
+                        anchor="lt"
                     )
 
             # draw timestamp
