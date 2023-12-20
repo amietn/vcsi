@@ -18,7 +18,10 @@ $ vcsi bbb_sunflower_2160p_60fps_normal.mp4 \
 --end-delay-percent 20 \
 --metadata-font /usr/share/fonts/TTF/DejaVuSans-Bold.ttf
 ```
-![Image](<http://i.imgur.com/rAItOp3.png>)
+
+![Example image 1](https://github.com/amietn/vcsi/assets/5566087/3a5b6f71-8930-4ae5-af92-d4490292cf82)
+
+
 
 ```
 $ vcsi bbb_sunflower_2160p_60fps_normal.mp4 \
@@ -29,7 +32,8 @@ $ vcsi bbb_sunflower_2160p_60fps_normal.mp4 \
 --timestamp-font /usr/share/fonts/TTF/DejaVuSans.ttf \
 -o output.png
 ```
-![Image](<http://i.imgur.com/TA4JXal.jpg>)
+
+![Example image 2](https://github.com/amietn/vcsi/assets/5566087/51d8c7e7-8037-43bd-a303-8c81ee94943d)
 
 
 The above contact sheets were generated from a movie called "Big Buck Bunny".
