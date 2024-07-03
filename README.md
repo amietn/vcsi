@@ -11,7 +11,7 @@ Create video contact sheets. A video contact sheet is an image composed of video
 ```
 $ vcsi bbb_sunflower_2160p_60fps_normal.mp4 \
 -t \
--w 850 \
+-w 830 \
 -g 4x4 \
 --background-color 000000 \
 --metadata-font-color ffffff \
@@ -19,21 +19,19 @@ $ vcsi bbb_sunflower_2160p_60fps_normal.mp4 \
 --metadata-font /usr/share/fonts/TTF/DejaVuSans-Bold.ttf
 ```
 
-![Example image 1](https://github.com/amietn/vcsi/assets/5566087/3a5b6f71-8930-4ae5-af92-d4490292cf82)
-
-
+![Example image 1](https://github.com/amietn/vcsi/assets/5566087/4ef4e631-eca6-43d0-8400-89f1bbbda73d)
 
 ```
 $ vcsi bbb_sunflower_2160p_60fps_normal.mp4 \
 -t \
--w 850 \
+-w 830 \
 -g 3x5 \
 --end-delay-percent 20 \
 --timestamp-font /usr/share/fonts/TTF/DejaVuSans.ttf \
 -o output.png
 ```
 
-![Example image 2](https://github.com/amietn/vcsi/assets/5566087/51d8c7e7-8037-43bd-a303-8c81ee94943d)
+![Example image 2](https://github.com/amietn/vcsi/assets/5566087/5c6e88f3-29af-44dc-b36c-5e493e6d8dee)
 
 
 The above contact sheets were generated from a movie called "Big Buck Bunny".
