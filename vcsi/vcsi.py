@@ -504,6 +504,38 @@ class MediaCapture(object):
     def make_capture(self, time, width, height, out_path="out.png"):
         """Capture a frame at given time with given width and height using ffmpeg
         """
+        import json # required to easily parse ffprobe output to determine if video is hdr
+
+        DEVNULL = open(os.devnull, 'wb')  # or use subprocess.DEVNULL in Python 3.3+
+
+        def ffprobe_info(input_file):
+            cmd = [
+                "ffprobe",
+                "-v", "quiet",
+                "-print_format", "json",
+                "-show_format",
+                "-show_streams",
+                input_file
+            ]
+            try:
+                output = subprocess.check_output(cmd, stderr=subprocess.STDOUT)
+                info = json.loads(output)
+                return info
+            except (subprocess.CalledProcessError, json.JSONDecodeError):
+                return {}
+
+        def is_hdr_video(input_file):
+            info = ffprobe_info(input_file)
+            if "streams" not in info:
+                return False
+            # Look for PQ or HLG transfer in first video stream
+            for stream in info["streams"]:
+                if stream.get("codec_type") == "video":
+                    color_transfer = stream.get("color_transfer", "").lower()
+                    if color_transfer in ["smpte2084", "arib-std-b67"]:
+                        return True
+            return False
+        
         skip_delay = MediaInfo.pretty_duration(self.skip_delay_seconds, show_millis=True)
 
         ffmpeg_command = [
@@ -514,18 +546,22 @@ class MediaCapture(object):
             "-s", "%sx%s" % (width, height),
         ]
 
-        if self.frame_type is not None:
-            select_args = [
-                "-vf", "select='eq(frame_type\\," + self.frame_type + ")'"
-            ]
+        filters = []
+
+        if is_hdr_video(self.path):
+            filters.append("zscale=t=linear:npl=100,format=gbrpf32le,zscale=p=bt709,tonemap=tonemap=hable:desat=0,zscale=t=bt709:m=bt709:r=tv,format=yuv420p[v]")
 
         if self.frame_type == "key":
-            select_args = [
-                "-vf", "select=key"
-            ]
+            filters.append("select=key")
+        elif self.frame_type is not None:
+            # eq(frame_type\,I), etc.
+            filters.append(f"select='eq(frame_type\\,{self.frame_type})'")
 
-        if self.frame_type is not None:
-            ffmpeg_command += select_args
+        # Only if we actually have filters do we append -vf
+        if filters:
+            ffmpeg_command += [
+            "-vf", ",".join(filters)
+            ]
 
         ffmpeg_command += [
             "-y",
