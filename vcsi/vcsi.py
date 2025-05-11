@@ -572,10 +572,17 @@ class MediaCapture(object):
                 ]
 
         try:
-            subprocess.call(ffmpeg_command, stdin=DEVNULL, stderr=DEVNULL, stdout=DEVNULL)
+            subprocess.run(ffmpeg_command, stdin=DEVNULL, capture_output=True, check=True)
         except FileNotFoundError:
             error = "Could not find 'ffmpeg' executable. Please make sure ffmpeg/ffprobe is installed and is in your PATH."
             error_exit(error)
+        except subprocess.CalledProcessError as ex:
+            raise RuntimeError("\n".join([
+                "ffmpeg had an error while decoding the file:",
+                f"Command: '{" ".join(ex.cmd)}'",
+                f"Exit code: {ex.returncode}",
+                f"Output: {ex.stderr.decode("utf-8")}",
+            ])) from None
 
     def compute_avg_color(self, image_path):
         """Computes the average color of an image
