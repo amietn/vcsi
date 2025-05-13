@@ -14,6 +14,7 @@ from argparse import ArgumentTypeError
 from concurrent.futures import ThreadPoolExecutor
 from copy import deepcopy
 from typing import List, Iterable
+from urllib.parse import urlparse
 
 try:
     from subprocess import DEVNULL
@@ -1655,7 +1656,14 @@ def process_file(path, args):
 
     args = deepcopy(args)
 
-    if not os.path.exists(path):
+    is_url = False
+    try:
+        urlparse(path)
+        is_url = True
+    except ValueError(e):
+        pass
+
+    if not is_url and not os.path.exists(path):
         if args.ignore_errors:
             print("File does not exist, skipping: {}".format(path))
             return
@@ -1663,10 +1671,11 @@ def process_file(path, args):
             error_message = "File does not exist: {}".format(path)
             error_exit(error_message)
 
-    file_extension = path.lower().split(".")[-1]
-    if file_extension in args.exclude_extensions:
-        print("[WARN] Excluded extension {}. Skipping.".format(file_extension))
-        return
+    if not is_url:
+        file_extension = path.lower().split(".")[-1]
+        if file_extension in args.exclude_extensions:
+            print("[WARN] Excluded extension {}. Skipping.".format(file_extension))
+            return
 
     output_path = args.output_path
     if not output_path:
