@@ -1657,8 +1657,9 @@ def process_file(path, args):
     args = deepcopy(args)
 
     is_url = False
+    url_path = ""
     try:
-        urlparse(path)
+        _, _, url_path, _, _, _ = urlparse(path)
         is_url = True
     except ValueError(e):
         pass
@@ -1680,6 +1681,11 @@ def process_file(path, args):
     output_path = args.output_path
     if not output_path:
         output_path = path + "." + args.image_format
+        if is_url:
+            url_path = url_path.replace("/", "_")
+            if len(url_path) == 0:
+                url_path = "out"
+            output_path = f"{url_path}.{args.image_format}"
     elif os.path.isdir(output_path):
         output_path = os.path.join(output_path, os.path.basename(path) + "." + args.image_format)
 
