@@ -11,3 +11,4 @@ __pycache__
 /build
 /dist
 /vcsi.egg-info
+uv.lock
