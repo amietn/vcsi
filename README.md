@@ -38,21 +38,27 @@ The above contact sheets were generated from a movie called "Big Buck Bunny".
 
 ## Installation
 
-### PyPi
+First, install [uv](https://docs.astral.sh/uv/getting-started/installation/).
+
+
+### uv
 
 `vcsi` can be installed from PyPi:
 
 ```
-$ pip install vcsi
+$ uv tool install vcsi
 ```
 
-### Poetry
-
-First install [Poetry](https://python-poetry.org/docs/#installation), then run:
+or from local sources:
 
 ```
-$ poetry build
-$ pip install dist/*.whl
+$ uv tool install .
+```
+
+### pip
+
+```
+pip install vcsi
 ```
 
 ### Distribution packages
@@ -71,7 +77,7 @@ Your system is not listed?
 $ apt-get install ffmpeg
 ```
 
-Then use the Poetry installation method above.
+Then use the uv installation method above.
 
 Running Windows? See the note below.
 
@@ -366,11 +372,11 @@ Resolution: {{sample_width}}x{{sample_height}}
 To run the test suite, run:
 
 ```
-poetry run pytest
+uv run pytest
 ```
 
 To measure code coverage:
 
 ```
-poetry run pytest --cov=vcsi.vcsi
+uv run pytest --cov=vcsi.vcsi
 ```
