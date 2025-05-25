@@ -380,3 +380,9 @@ To measure code coverage:
 ```
 uv run pytest --cov=vcsi.vcsi
 ```
+
+To test Github Actions locally using [act](https://github.com/nektos/act):
+
+```
+act push
+```
