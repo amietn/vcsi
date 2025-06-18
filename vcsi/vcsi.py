@@ -302,6 +302,7 @@ class MediaInfo(object):
         self.duration = MediaInfo.pretty_duration(self.duration_seconds)
 
         self.filename = os.path.basename(format_dict["filename"])
+        self.file_path = os.path.abspath(format_dict["filename"])
 
         self.size_bytes = int(format_dict["size"])
         self.size = self.human_readable_size(self.size_bytes)
@@ -471,6 +472,7 @@ class MediaInfo(object):
         table.append({"name": "size", "description": "File size (pretty format)", "example": "128.3 MiB"})
         table.append({"name": "size_bytes", "description": "File size (bytes)", "example": "4662788373"})
         table.append({"name": "filename", "description": "File name", "example": "video.mkv"})
+        table.append({"name": "file_path", "description": "Full file path", "example": "/home/user/vids/video.mkv"})
         table.append({"name": "duration", "description": "Duration (pretty format)", "example": "03:07"})
         table.append({"name": "sample_width", "description": "Sample width (pixels)", "example": "1920"})
         table.append({"name": "sample_height", "description": "Sample height (pixels)", "example": "1080"})
