@@ -1619,6 +1619,9 @@ def main():
         print_template_attributes()
         sys.exit(0)
 
+    if len(args.thumbnail_output_path) != 0:
+        check_output_path_exists(args.thumbnail_output_path)
+
     def process_file_or_ignore(filepath, args):
         try:
             process_file(filepath, args)
@@ -1816,6 +1819,10 @@ def process_file(path, args):
     if not is_save_successful:
         error_exit("Unsupported image format: %s." % (args.image_format,))
 
+
+def check_output_path_exists(thumbnail_output_path: str):
+    os.makedirs(thumbnail_output_path, exist_ok=True)
+    return
 
 if __name__ == "__main__":
     main()
