@@ -117,6 +117,7 @@ DEFAULT_IMAGE_FORMAT = "jpg"
 DEFAULT_TIMESTAMP_POSITION = TimestampPosition.se
 DEFAULT_FRAME_TYPE = None
 DEFAULT_INTERVAL = None
+DEFAULT_NO_OVERWRITE = False
 
 
 class Config:
@@ -154,6 +155,7 @@ class Config:
     timestamp_position = DEFAULT_TIMESTAMP_POSITION
     frame_type = DEFAULT_FRAME_TYPE
     interval = DEFAULT_INTERVAL
+    no_overwrite = DEFAULT_NO_OVERWRITE
 
     @classmethod
     def load_configuration(cls, filename=DEFAULT_CONFIG_FILE):
@@ -1578,7 +1580,8 @@ def main():
         dest="ignore_errors")
     parser.add_argument(
         "--no-overwrite",
-        action="store_true",
+        type=bool,
+        default=Config.no_overwrite,
         help="Do not overwrite output file if it already exists, simply ignore this file and continue processing other unprocessed files.",
         dest="no_overwrite"
     )
