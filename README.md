@@ -1,7 +1,6 @@
 # vcsi
 
-[![Build Status](https://travis-ci.org/amietn/vcsi.svg?branch=master)](https://travis-ci.org/amietn/vcsi)
-[![Coverage Status](https://coveralls.io/repos/github/amietn/vcsi/badge.svg?branch=master)](https://coveralls.io/github/amietn/vcsi?branch=master)
+![Build Status](https://github.com/amietn/vcsi/actions/workflows/testing.yml/badge.svg)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](http://opensource.org/licenses/MIT)
 [![PyPI version](https://badge.fury.io/py/vcsi.svg)](https://badge.fury.io/py/vcsi)
 
@@ -12,35 +11,54 @@ Create video contact sheets. A video contact sheet is an image composed of video
 ```
 $ vcsi bbb_sunflower_2160p_60fps_normal.mp4 \
 -t \
--w 850 \
+-w 830 \
 -g 4x4 \
 --background-color 000000 \
 --metadata-font-color ffffff \
 --end-delay-percent 20 \
 --metadata-font /usr/share/fonts/TTF/DejaVuSans-Bold.ttf
 ```
-![Image](<http://i.imgur.com/rAItOp3.png>)
+
+![Example image 1](https://github.com/amietn/vcsi/assets/5566087/4ef4e631-eca6-43d0-8400-89f1bbbda73d)
 
 ```
 $ vcsi bbb_sunflower_2160p_60fps_normal.mp4 \
 -t \
--w 850 \
+-w 830 \
 -g 3x5 \
 --end-delay-percent 20 \
 --timestamp-font /usr/share/fonts/TTF/DejaVuSans.ttf \
 -o output.png
 ```
-![Image](<http://i.imgur.com/TA4JXal.jpg>)
+
+![Example image 2](https://github.com/amietn/vcsi/assets/5566087/5c6e88f3-29af-44dc-b36c-5e493e6d8dee)
 
 
 The above contact sheets were generated from a movie called "Big Buck Bunny".
 
 ## Installation
 
-### PyPi
+First, install [uv](https://docs.astral.sh/uv/getting-started/installation/).
+
+
+### uv
+
+`vcsi` can be installed from PyPi:
 
 ```
-$ pip install vcsi
+$ uv tool install vcsi
+```
+
+or from local sources:
+
+```
+$ uv tool install .
+```
+
+### pip
+
+```
+pip install vcsi
 ```
 
 ### Distribution packages
@@ -57,8 +75,9 @@ Your system is not listed?
 
 ```
 $ apt-get install ffmpeg
-$ python setup.py install
 ```
+
+Then use the uv installation method above.
 
 Running Windows? See the note below.
 
@@ -346,3 +365,24 @@ Resolution: {{sample_width}}x{{sample_height}}
 | audio_sample_rate | Audio sample rate (Hz) | 44100 |
 | audio_bit_rate | Audio bit rate | 192000 |
 | frame_rate | Frame rate (fps) | 23.974 |
+
+
+## Testing
+
+To run the test suite, run:
+
+```
+uv run pytest
+```
+
+To measure code coverage:
+
+```
+uv run pytest --cov=vcsi.vcsi
+```
+
+To test Github Actions locally using [act](https://github.com/nektos/act):
+
+```
+act push
+```

@@ -14,6 +14,7 @@ from argparse import ArgumentTypeError
 from concurrent.futures import ThreadPoolExecutor
 from copy import deepcopy
 from typing import List, Iterable
+from urllib.parse import urlparse
 
 try:
     from subprocess import DEVNULL
@@ -108,7 +109,7 @@ DEFAULT_METADATA_VERTICAL_MARGIN = DEFAULT_METADATA_MARGIN
 DEFAULT_CAPTURE_ALPHA = 255
 DEFAULT_GRID_SIZE = Grid(4, 4)
 DEFAULT_TIMESTAMP_HORIZONTAL_PADDING = 3
-DEFAULT_TIMESTAMP_VERTICAL_PADDING = 1
+DEFAULT_TIMESTAMP_VERTICAL_PADDING = 3
 DEFAULT_TIMESTAMP_HORIZONTAL_MARGIN = 5
 DEFAULT_TIMESTAMP_VERTICAL_MARGIN = 5
 DEFAULT_IMAGE_QUALITY = 100
@@ -301,6 +302,7 @@ class MediaInfo(object):
         self.duration = MediaInfo.pretty_duration(self.duration_seconds)
 
         self.filename = os.path.basename(format_dict["filename"])
+        self.file_path = os.path.abspath(format_dict["filename"])
 
         self.size_bytes = int(format_dict["size"])
         self.size = self.human_readable_size(self.size_bytes)
@@ -481,6 +483,7 @@ class MediaInfo(object):
         table.append({"name": "size", "description": "File size (pretty format)", "example": "128.3 MiB"})
         table.append({"name": "size_bytes", "description": "File size (bytes)", "example": "4662788373"})
         table.append({"name": "filename", "description": "File name", "example": "video.mkv"})
+        table.append({"name": "file_path", "description": "Full file path", "example": "/home/user/vids/video.mkv"})
         table.append({"name": "duration", "description": "Duration (pretty format)", "example": "03:07"})
         table.append({"name": "sample_width", "description": "Sample width (pixels)", "example": "1920"})
         table.append({"name": "sample_height", "description": "Sample height (pixels)", "example": "1080"})
@@ -863,7 +866,7 @@ def max_line_length(
     max_length = 0
     for i in range(len(text) + 1):
         text_chunk = text[:i]
-        text_width = 0 if len(text_chunk) == 0 else metadata_font.getsize(text_chunk)[0]
+        text_width = 0 if len(text_chunk) == 0 else metadata_font.getlength(text_chunk)
 
         max_length = i
         if text_width > max_width:
@@ -1058,7 +1061,11 @@ def compose_contact_sheet(
                 "dm": str(parsed_duration["millis"]).zfill(3)
             }
             timestamp_text = args.timestamp_format.format(**timestamp_args)
-            text_size = timestamp_font.getsize(timestamp_text)
+            text_bbox = timestamp_font.getbbox(timestamp_text)
+            (left, top, right, bottom) = text_bbox
+            text_width = abs(right - left)
+            text_height = abs(top - bottom)
+            text_size = (text_width, text_height)
 
             # draw rectangle
             rectangle_hpadding = args.timestamp_horizontal_padding
@@ -1098,7 +1105,8 @@ def compose_contact_sheet(
                         ),
                         timestamp_text,
                         font=timestamp_font,
-                        fill=args.timestamp_border_color
+                        fill=args.timestamp_border_color,
+                        anchor="lt"
                     )
 
             # draw timestamp
@@ -1109,7 +1117,8 @@ def compose_contact_sheet(
                 ),
                 timestamp_text,
                 font=timestamp_font,
-                fill=args.timestamp_font_color
+                fill=args.timestamp_font_color,
+                anchor="lt"
             )
 
         # update x position for next frame
@@ -1660,7 +1669,15 @@ def process_file(path, args):
 
     args = deepcopy(args)
 
-    if not os.path.exists(path):
+    is_url = False
+    url_path = ""
+    try:
+        _, _, url_path, _, _, _ = urlparse(path)
+        is_url = True
+    except ValueError(e):
+        pass
+
+    if not is_url and not os.path.exists(path):
         if args.ignore_errors:
             print("File does not exist, skipping: {}".format(path))
             return
@@ -1668,14 +1685,20 @@ def process_file(path, args):
             error_message = "File does not exist: {}".format(path)
             error_exit(error_message)
 
-    file_extension = path.lower().split(".")[-1]
-    if file_extension in args.exclude_extensions:
-        print("[WARN] Excluded extension {}. Skipping.".format(file_extension))
-        return
+    if not is_url:
+        file_extension = path.lower().split(".")[-1]
+        if file_extension in args.exclude_extensions:
+            print("[WARN] Excluded extension {}. Skipping.".format(file_extension))
+            return
 
     output_path = args.output_path
     if not output_path:
         output_path = path + "." + args.image_format
+        if is_url:
+            url_path = url_path.replace("/", "_")
+            if len(url_path) == 0:
+                url_path = "out"
+            output_path = f"{url_path}.{args.image_format}"
     elif os.path.isdir(output_path):
         output_path = os.path.join(output_path, os.path.basename(path) + "." + args.image_format)
 
