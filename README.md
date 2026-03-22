@@ -55,6 +55,12 @@ or from local sources:
 $ uv tool install .
 ```
 
+or via URL:
+
+```
+uv tool install git+https://github.com/amietn/vcsi
+```
+
 ### pip
 
 ```
