@@ -256,9 +256,25 @@ class MediaInfo(object):
 
         # videos recorded with a smartphone may have a "rotate" flag
         try:
+            # Try to get rotation from the original key
             rotation = int(self.video_stream["tags"]["rotate"])
         except KeyError:
+            # If the original key is not present, check the  key for newer iPhones 14+ (iOS 17+)
+            side_data_list = self.video_stream.get("side_data_list", [])
             rotation = None
+
+            for side_data in side_data_list:
+                if side_data.get("side_data_type") == "Display Matrix":
+                    # Extract rotation value
+                    rotation_value = side_data.get("rotation")
+                    if rotation_value is not None:
+                        # Normalize the rotation value to ensure it is either 90, 180, 270, or None
+                        rotation = int(rotation_value) % 360
+                        if rotation < 0:
+                            rotation += 360
+                        if rotation not in [0, 90, 180, 270]:
+                            rotation = None
+                        break
 
         if rotation in [90, 270]:
             # swap width and height
@@ -580,12 +596,14 @@ class MediaCapture(object):
             error = "Could not find 'ffmpeg' executable. Please make sure ffmpeg/ffprobe is installed and is in your PATH."
             error_exit(error)
         except subprocess.CalledProcessError as ex:
-            raise RuntimeError("\n".join([
-                "ffmpeg had an error while decoding the file:",
-                f"Command: '{" ".join(ex.cmd)}'",
-                f"Exit code: {ex.returncode}",
-                f"Output: {ex.stderr.decode("utf-8")}",
-            ])) from None
+            error = f"""
+                ffmpeg had an error while decoding the file:",
+                Command: '{" ".join(ex.cmd)}',
+                Exit code: {ex.returncode},
+                Output: {ex.stderr.decode("utf-8")}
+                """
+            raise RuntimeError(error)
+            
 
     def compute_avg_color(self, image_path):
         """Computes the average color of an image
@@ -1670,7 +1688,7 @@ def process_file(path, args):
     try:
         _, _, url_path, _, _, _ = urlparse(path)
         is_url = True
-    except ValueError(e):
+    except ValueError:
         pass
 
     if not is_url and not os.path.exists(path):
