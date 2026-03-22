@@ -2,4 +2,5 @@
 
 rm -rf dist
 uv build
-uv publish
+source settings.env
+uv publish --token $PYPI_TOKEN
