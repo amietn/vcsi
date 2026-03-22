@@ -1,6 +1,6 @@
 [project]
 name = "vcsi"
-version = "7.0.16"
+dynamic = ["version"]
 description = "Create video contact sheets, thumbnails, screenshots"
 authors = [{ name = "Nils Amiet", email = "amietn@foobar.tld" }]
 requires-python = ">=3.10"
@@ -26,3 +26,7 @@ dev = [
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
+
+[tool.hatch.version]
+path = "vcsi/VERSION"
+pattern = "^(?P<version>.+)$"
