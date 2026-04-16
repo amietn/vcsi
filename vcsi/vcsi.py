@@ -1326,7 +1326,7 @@ def main():
             if os.path.exists(preargs.configfile):
                 Config.load_configuration(preargs.configfile)
             else:
-                error_exit("Could find config file")
+                error_exit("Could not find config file")
         else:
             # check if the config file exists and load it
             if os.path.exists(DEFAULT_CONFIG_FILE):
