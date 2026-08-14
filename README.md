@@ -323,6 +323,9 @@ optional arguments:
                         {DURATION}'. Another example: '{THUMBNAIL_NUMBER}'.
                         Yet another example: '{H}:{M}:{S}.{m} /
                         {dH}:{dM}:{dS}.{dm}'. (default: {TIME})
+  --ffmpeg-args FFMPEG_ARGS
+                        Extra arguments to pass to the ffmpeg command used for
+                        frame capture (default: None)
 
 
 ```

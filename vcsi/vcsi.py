@@ -7,6 +7,7 @@ from __future__ import print_function
 
 import datetime
 import os
+import shlex
 import shutil
 import subprocess
 import sys
@@ -117,6 +118,7 @@ DEFAULT_IMAGE_FORMAT = "jpg"
 DEFAULT_TIMESTAMP_POSITION = TimestampPosition.se
 DEFAULT_FRAME_TYPE = None
 DEFAULT_INTERVAL = None
+DEFAULT_FFMPEG_ARGS = None
 
 
 class Config:
@@ -154,6 +156,7 @@ class Config:
     timestamp_position = DEFAULT_TIMESTAMP_POSITION
     frame_type = DEFAULT_FRAME_TYPE
     interval = DEFAULT_INTERVAL
+    ffmpeg_args = DEFAULT_FFMPEG_ARGS
 
     @classmethod
     def load_configuration(cls, filename=DEFAULT_CONFIG_FILE):
@@ -232,7 +235,7 @@ class MediaInfo(object):
                 if stream["codec_type"] == "video":
                     self.video_stream = stream
                     break
-            except:
+            except (KeyError, TypeError):
                 pass
 
     def find_audio_stream(self):
@@ -243,7 +246,7 @@ class MediaInfo(object):
                 if stream["codec_type"] == "audio":
                     self.audio_stream = stream
                     break
-            except:
+            except (KeyError, TypeError):
                 pass
 
     def compute_display_resolution(self):
@@ -514,42 +517,17 @@ class MediaCapture(object):
     """
 
     def __init__(self, path, accurate=False, skip_delay_seconds=Config.accurate_delay_seconds,
-                 frame_type=Config.frame_type):
+                 frame_type=Config.frame_type, ffmpeg_args=None):
         self.path = path
         self.accurate = accurate
         self.skip_delay_seconds = skip_delay_seconds
         self.frame_type = frame_type
+        self.ffmpeg_args = ffmpeg_args
 
     def make_capture(self, time, width, height, out_path="out.png"):
         """Capture a frame at given time with given width and height using ffmpeg
         """
         skip_delay = MediaInfo.pretty_duration(self.skip_delay_seconds, show_millis=True)
-
-        ffmpeg_command = [
-            "ffmpeg",
-            "-ss", time,
-            "-i", self.path,
-            "-vframes", "1",
-            "-s", "%sx%s" % (width, height),
-        ]
-
-        if self.frame_type is not None:
-            select_args = [
-                "-vf", "select='eq(frame_type\\," + self.frame_type + ")'"
-            ]
-
-        if self.frame_type == "key":
-            select_args = [
-                "-vf", "select=key"
-            ]
-
-        if self.frame_type is not None:
-            ffmpeg_command += select_args
-
-        ffmpeg_command += [
-            "-y",
-            out_path
-        ]
 
         if self.accurate:
             time_seconds = MediaInfo.pretty_to_seconds(time)
@@ -563,16 +541,9 @@ class MediaCapture(object):
                     "-vframes", "1",
                     "-s", "%sx%s" % (width, height),
                 ]
-
-                if self.frame_type is not None:
-                    ffmpeg_command += select_args
-
-                ffmpeg_command += [
-                    "-y",
-                    out_path
-                ]
             else:
                 skip_time = MediaInfo.pretty_duration(skip_time_seconds, show_millis=True)
+                skip_delay = MediaInfo.pretty_duration(self.skip_delay_seconds, show_millis=True)
                 ffmpeg_command = [
                     "ffmpeg",
                     "-ss", skip_time,
@@ -581,14 +552,28 @@ class MediaCapture(object):
                     "-vframes", "1",
                     "-s", "%sx%s" % (width, height),
                 ]
+        else:
+            ffmpeg_command = [
+                "ffmpeg",
+                "-ss", time,
+                "-i", self.path,
+                "-vframes", "1",
+                "-s", "%sx%s" % (width, height),
+            ]
 
-                if self.frame_type is not None:
-                    ffmpeg_command += select_args
+        if self.frame_type is not None:
+            if self.frame_type == "key":
+                ffmpeg_command += ["-vf", "select=key"]
+            else:
+                ffmpeg_command += ["-vf", "select='eq(frame_type\\," + self.frame_type + ")'"]
 
-                ffmpeg_command += [
-                    "-y",
-                    out_path
-                ]
+        if self.ffmpeg_args:
+            ffmpeg_command += shlex.split(self.ffmpeg_args)
+
+        ffmpeg_command += [
+            "-y",
+            out_path
+        ]
 
         try:
             subprocess.run(ffmpeg_command, stdin=DEVNULL, capture_output=True, check=True)
@@ -1135,15 +1120,10 @@ def compose_contact_sheet(
                 anchor="lt"
             )
 
-        # update x position for next frame
+        # update position for next frame
         w += desired_size[0] + args.grid_horizontal_spacing
-
-        # update y position
         if (i + 1) % args.grid.x == 0:
             h += desired_size[1] + args.grid_vertical_spacing
-
-        # update x position
-        if (i + 1) % args.grid.x == 0:
             w = 0
 
     # draw metadata
@@ -1227,7 +1207,7 @@ def metadata_position_type(string):
     if lowercase_position in valid_metadata_positions:
         return lowercase_position
     else:
-        error = 'Metadata header position must be one of %s' % (str(valid_metadata_positions, ))
+        error = 'Metadata header position must be one of %s' % (valid_metadata_positions,)
         raise argparse.ArgumentTypeError(error)
 
 
@@ -1242,7 +1222,7 @@ def hex_color_type(string):
             components += (255,)
         c = Color(*components)
         return c
-    except:
+    except (ValueError, TypeError):
         error = "Color must be an hexadecimal number, for example 'AABBCC'"
         raise argparse.ArgumentTypeError(error)
 
@@ -1637,6 +1617,12 @@ def main():
         default="{TIME}",
         dest="timestamp_format"
     )
+    parser.add_argument(
+        "--ffmpeg-args",
+        help="Extra arguments to pass to the ffmpeg command used for frame capture",
+        default=Config.ffmpeg_args,
+        dest="ffmpeg_args"
+    )
 
     args = parser.parse_args()
 
@@ -1742,7 +1728,8 @@ def process_file(path, args):
         path,
         accurate=args.is_accurate,
         skip_delay_seconds=args.accurate_delay_seconds,
-        frame_type=args.frame_type
+        frame_type=args.frame_type,
+        ffmpeg_args=args.ffmpeg_args
     )
 
     # metadata margins
