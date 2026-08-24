@@ -60,6 +60,16 @@ def test_template_attributes():
     assert attributes["video_codec"] == "h264"
 
 
+def test_bit_rate():
+    mi = MediaInfoForTest(FFPROBE_EXAMPLE_JSON_PATH)
+    assert mi.bit_rate == 4486529
+
+
+def test_pix_fmt():
+    mi = MediaInfoForTest(FFPROBE_EXAMPLE_JSON_PATH)
+    assert mi.pix_fmt == "yuv420p"
+
+
 def test_grid_desired_size():
     mi = MediaInfoForTest(FFPROBE_EXAMPLE_JSON_PATH)
     x = 2

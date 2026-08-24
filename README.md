@@ -363,7 +363,9 @@ Resolution: {{sample_width}}x{{sample_height}}
 | display_height | Display height (pixels) | 1080 |
 | video_codec | Video codec | h264 |
 | video_codec_long | Video codec (long name) | H.264 / AVC / MPEG-4 AVC / MPEG-4 part 10 |
+| bit_rate | Overall file bitrate | 2371480 |
 | video_bit_rate | Video bitrate | 371006 |
+| pix_fmt | Video pixel format | yuv420p |
 | display_aspect_ratio | Display aspect ratio | 16:9 |
 | sample_aspect_ratio | Sample aspect ratio | 1:1 |
 | audio_codec | Audio codec | aac |

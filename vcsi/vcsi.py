@@ -323,6 +323,11 @@ class MediaInfo(object):
         self.size_bytes = int(format_dict["size"])
         self.size = self.human_readable_size(self.size_bytes)
 
+        try:
+            self.bit_rate = int(format_dict["bit_rate"])
+        except KeyError:
+            self.bit_rate = None
+
     @staticmethod
     def pretty_to_seconds(
             pretty_duration):
@@ -430,6 +435,11 @@ class MediaInfo(object):
             self.video_bit_rate = None
 
         try:
+            self.pix_fmt = self.video_stream["pix_fmt"]
+        except (KeyError, AttributeError):
+            self.pix_fmt = None
+
+        try:
             self.sample_aspect_ratio = self.video_stream["sample_aspect_ratio"]
         except KeyError:
             self.sample_aspect_ratio = None
@@ -497,7 +507,9 @@ class MediaInfo(object):
         table.append({"name": "video_codec", "description": "Video codec", "example": "h264"})
         table.append({"name": "video_codec_long", "description": "Video codec (long name)",
                       "example": "H.264 / AVC / MPEG-4 AVC / MPEG-4 part 10"})
+        table.append({"name": "bit_rate", "description": "Overall file bitrate", "example": "2371480"})
         table.append({"name": "video_bit_rate", "description": "Video bitrate", "example": "4000"})
+        table.append({"name": "pix_fmt", "description": "Video pixel format", "example": "yuv420p"})
         table.append({"name": "display_aspect_ratio", "description": "Display aspect ratio", "example": "16:9"})
         table.append({"name": "sample_aspect_ratio", "description": "Sample aspect ratio", "example": "1:1"})
         table.append({"name": "audio_codec", "description": "Audio codec", "example": "aac"})
